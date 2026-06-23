@@ -21,9 +21,18 @@ export const pickImage = (callback: () => void, multiple = false) => {
               selectionLimit: multiple ? 0 : 1, // 0 = multiple, 1 = single
             },
             response => {
+              if (response.errorCode) {
+                const message =
+                  response.errorCode === 'camera_unavailable'
+                    ? 'Camera is not available on this device or simulator.'
+                    : response.errorMessage ||
+                      'Unable to open the camera right now.';
+                ShowToast('error', message);
+                return;
+              }
+
               if (
                 !response.didCancel &&
-                !response.errorCode &&
                 response.assets?.length
               ) {
                 callback(multiple ? response.assets : response.assets[0]);
@@ -42,9 +51,17 @@ export const pickImage = (callback: () => void, multiple = false) => {
               selectionLimit: multiple ? 0 : 1,
             },
             response => {
+              if (response.errorCode) {
+                ShowToast(
+                  'error',
+                  response.errorMessage ||
+                    'Unable to open the photo library right now.',
+                );
+                return;
+              }
+
               if (
                 !response.didCancel &&
-                !response.errorCode &&
                 response.assets?.length
               ) {
                 callback(multiple ? response.assets : response.assets[0]);

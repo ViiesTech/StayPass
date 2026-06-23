@@ -25,6 +25,7 @@ import SellerProfile from '../screens/appStack/SellerProfile';
 import MyPost from '../screens/appStack/MyPost';
 import CreatePost from '../screens/appStack/CreatePost';
 import PropertyDetails from '../screens/appStack/PropertyDetails';
+import BlockedUsers from '../screens/appStack/BlockedUsers';
 
 const Main = () => {
   const Stack = createNativeStackNavigator();
@@ -58,6 +59,7 @@ const Main = () => {
       <Stack.Screen name="MyPost" component={MyPost} />
       <Stack.Screen name="CreatePost" component={CreatePost} />
       <Stack.Screen name="PropertyDetails" component={PropertyDetails} />
+      <Stack.Screen name="BlockedUsers" component={BlockedUsers} />
     </Stack.Navigator>
   );
 };

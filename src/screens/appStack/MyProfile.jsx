@@ -1,6 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
-import {View, Text, Image, FlatList, TouchableOpacity} from 'react-native';
+import {View, FlatList, TouchableOpacity} from 'react-native';
 import React from 'react';
+import FastImage from 'react-native-fast-image';
 import {Header} from '../../components/Header';
 import Wrapper from '../../components/Wrapper';
 import {responsiveHeight, responsiveWidth} from '../../responsive_dimensions';
@@ -13,6 +14,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {useSelector} from 'react-redux';
 import {IMAGE_URL} from '../../redux/constant';
+import SafeFastImage from '../../components/SafeFastImage';
 const MyProfile = ({navigation}) => {
   const {email, name, image} = useSelector(state => state?.persistedData?.user);
 
@@ -31,6 +33,13 @@ const MyProfile = ({navigation}) => {
       iconName: 'key',
       navigateTo: 'ChangePassword',
     },
+    {
+      id: 3,
+      title: 'Blocked users',
+      icon: MaterialIcons,
+      iconName: 'block',
+      navigateTo: 'BlockedUsers',
+    },
   ];
   return (
     <Wrapper isScroll containerStyle={{paddingBottom: responsiveHeight(2)}}>
@@ -39,14 +48,14 @@ const MyProfile = ({navigation}) => {
       <View style={{alignItems: 'center', justifyContent: 'center'}}>
         <View style={{width: responsiveWidth(30)}}>
           <View style={{borderRadius: responsiveHeight(10)}}>
-            <Image
+            <SafeFastImage
               source={image ? {uri: `${IMAGE_URL}${image}`} : images.userDummy}
               style={{
                 height: responsiveHeight(13.2),
                 width: responsiveWidth(27.5),
-                resizeMode: 'cover',
                 borderRadius: responsiveHeight(10),
               }}
+              resizeMode={FastImage.resizeMode.cover}
             />
           </View>
         </View>
@@ -81,7 +90,11 @@ const MyProfile = ({navigation}) => {
               const Icon = item.icon;
               return (
                 <TouchableOpacity
-                  onPress={() => navigation.navigate(item.navigateTo)}>
+                  onPress={() =>
+                    item.navigateTo
+                      ? navigation.navigate(item.navigateTo)
+                      : null
+                  }>
                   <View
                     style={{
                       flexDirection: 'row',
@@ -102,7 +115,11 @@ const MyProfile = ({navigation}) => {
                       <NormalText fontSize={2} title={item.title} />
                     </View>
                     <TouchableOpacity
-                      onPress={() => navigation.navigate(item.navigateTo)}>
+                      onPress={() =>
+                        item.navigateTo
+                          ? navigation.navigate(item.navigateTo)
+                          : null
+                      }>
                       <Ionicons
                         name="chevron-forward"
                         color="#174240"
@@ -110,7 +127,7 @@ const MyProfile = ({navigation}) => {
                       />
                     </TouchableOpacity>
                   </View>
-                  {item.id === 1 && (
+                  {index < data.length - 1 && (
                     <View
                       style={{
                         borderWidth: 1,

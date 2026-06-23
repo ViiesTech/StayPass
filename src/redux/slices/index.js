@@ -5,6 +5,8 @@ const initialState = {
   token: null,
   user: {},
   type: '',
+  isGuest: true,
+  blockedUserIds: [],
   // profileCreated: false,
 };
 
@@ -15,12 +17,34 @@ export const Slice = createSlice({
     logout: state => {
       state.user = {};
       state.token = null;
+      state.isGuest = false;
+    },
+    goToLogin: state => {
+      state.user = {};
+      state.token = null;
+      state.isGuest = false;
     },
     setUserType: (state, action) => {
       state.type = action.payload;
     },
     setUserData: (state, action) => {
       state.user = action.payload;
+    },
+    setGuestMode: state => {
+      state.isGuest = true;
+    },
+    blockCommunityUser: (state, action) => {
+      if (!action.payload) {
+        return;
+      }
+      if (!state.blockedUserIds.includes(action.payload)) {
+        state.blockedUserIds.push(action.payload);
+      }
+    },
+    unblockCommunityUser: (state, action) => {
+      state.blockedUserIds = state.blockedUserIds.filter(
+        userId => userId !== action.payload,
+      );
     },
   },
   extraReducers: builder => {
@@ -62,6 +86,14 @@ export const Slice = createSlice({
   },
 });
 
-export const {logout, setUserType, setUserData} = Slice.actions;
+export const {
+  logout,
+  goToLogin,
+  setUserType,
+  setUserData,
+  setGuestMode,
+  blockCommunityUser,
+  unblockCommunityUser,
+} = Slice.actions;
 
 export default Slice.reducer;

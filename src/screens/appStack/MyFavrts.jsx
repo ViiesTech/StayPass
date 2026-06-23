@@ -1,5 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import {
+  Alert,
   View,
   Text,
   FlatList,
@@ -15,8 +16,26 @@ import {Colors} from '../../assets/colors';
 import {NormalText} from '../../components/Titles';
 import PropertiesCards from '../../components/PropertiesCards';
 import {useLazyGetAllFvrtsQuery} from '../../redux/services/MainIntegration';
+import {useNavigation} from '@react-navigation/native';
+import {useSelector, useDispatch} from 'react-redux';
+import {logout, goToLogin} from '../../redux/slices';
 
 const MyFavrts = () => {
+  const navigation = useNavigation();
+  const {isGuest} = useSelector(state => state?.persistedData);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    if (isGuest) {
+      Alert.alert(
+        'Login Required',
+        'Please log in to access your favourites.',
+        [
+          {text: 'Cancel', style: 'cancel', onPress: () => navigation.goBack()},
+          {text: 'Login', onPress: () => dispatch(goToLogin())},
+        ],
+      );
+    }
+  }, [isGuest]);
   const data = [
     {id: 1, title: 'Sale', value: 'Sell'},
     {id: 2, title: 'Rent', value: 'Rent'},

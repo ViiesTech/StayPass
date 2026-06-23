@@ -1,7 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
 import { View, TouchableOpacity, Text, FlatList, ActivityIndicator } from 'react-native';
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState } from 'react';
 import FastImage from 'react-native-fast-image';
+import Modal from 'react-native-modal';
 import SafeFastImage from './SafeFastImage';
 import { Colors } from '../assets/colors';
 import { responsiveFontSize, responsiveHeight, responsiveWidth } from '../responsive_dimensions';
@@ -23,9 +24,31 @@ interface PostProps {
   comment: string;
   commentLoading: boolean;
   setComment: (val: string) => void;
+  onReportPost?: (reason: string) => Promise<boolean> | boolean;
+  onBlockUser?: (reason: string) => Promise<boolean> | boolean;
+  canModerate?: boolean;
 }
 
-const Post: React.FC<PostProps> = React.memo(({ item, commentLoading, handleLikePress, handleCommentPress, comment, setComment }) => {
+const reportReasons = [
+  'Harassment or bullying',
+  'Hate speech',
+  'Sexual content',
+  'Spam or scam',
+  'Violence or threats',
+  'Other objectionable content',
+];
+
+const Post: React.FC<PostProps> = React.memo(({
+  item,
+  commentLoading,
+  handleLikePress,
+  handleCommentPress,
+  comment,
+  setComment,
+  onReportPost,
+  onBlockUser,
+  canModerate = true,
+}) => {
   const { _id } = useSelector((state: any) => state.persistedData.user);
   
   const isLiked = useMemo(() => {
@@ -33,6 +56,39 @@ const Post: React.FC<PostProps> = React.memo(({ item, commentLoading, handleLike
   }, [item?.like, _id]);
   
   const refRBSheet = useRef<any>();
+  const commentsListRef = useRef<any>();
+  const [moderationVisible, setModerationVisible] = useState(false);
+  const [moderationAction, setModerationAction] = useState<'report' | 'block' | null>(null);
+  const [selectedReason, setSelectedReason] = useState('');
+  const [isSubmittingModeration, setIsSubmittingModeration] = useState(false);
+
+  const closeModeration = () => {
+    if (isSubmittingModeration) {
+      return;
+    }
+    setModerationVisible(false);
+    setModerationAction(null);
+    setSelectedReason('');
+  };
+
+  const submitModeration = async () => {
+    if (!moderationAction || !selectedReason || isSubmittingModeration) {
+      return;
+    }
+
+    setIsSubmittingModeration(true);
+    const succeeded =
+      moderationAction === 'report'
+        ? await onReportPost?.(selectedReason)
+        : await onBlockUser?.(selectedReason);
+    setIsSubmittingModeration(false);
+
+    if (succeeded) {
+      setModerationVisible(false);
+      setModerationAction(null);
+      setSelectedReason('');
+    }
+  };
   
   const timeAgoShort = useMemo(() => (date: string) => {
     const now = moment();
@@ -50,7 +106,7 @@ const Post: React.FC<PostProps> = React.memo(({ item, commentLoading, handleLike
     return `${diffDays}d`;
   }, []);
 
-  const renderCommentItem = useMemo(() => ({ item: commentItem, index }: any) => (
+  const renderCommentItem = useMemo(() => ({ item: commentItem }: any) => (
     <View
       style={{
         flexDirection: 'row',
@@ -134,7 +190,192 @@ const Post: React.FC<PostProps> = React.memo(({ item, commentLoading, handleLike
           </View>
           <NormalText title={moment(item?.createdAt).fromNow()} fontSize={1.5} />
         </View>
+        {canModerate && item?.userId?._id !== _id && (
+          <TouchableOpacity
+            onPress={() => setModerationVisible(true)}
+            accessibilityLabel="Community safety options"
+            style={{
+              marginLeft: 'auto',
+              padding: responsiveHeight(0.8),
+            }}>
+            <Feather name="more-vertical" size={23} color={Colors.black} />
+          </TouchableOpacity>
+        )}
       </View>
+      <Modal
+        isVisible={moderationVisible}
+        onBackdropPress={closeModeration}
+        onBackButtonPress={closeModeration}
+        useNativeDriver
+        style={{margin: responsiveHeight(2)}}>
+        <View
+          style={{
+            backgroundColor: Colors.white,
+            borderRadius: responsiveHeight(1),
+            padding: responsiveHeight(2),
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+            <View style={{flex: 1}}>
+              <BoldText
+                title={
+                  moderationAction === 'report'
+                    ? 'Report Post'
+                    : moderationAction === 'block'
+                    ? 'Block User'
+                    : 'Community Safety'
+                }
+                fontSize={2.3}
+                fontWeight="700"
+              />
+              <NormalText
+                title={
+                  moderationAction
+                    ? 'Choose a reason before continuing.'
+                    : 'Report objectionable content or block this user.'
+                }
+                color={Colors.greyText4}
+                fontSize={1.6}
+                mrgnTop={0.5}
+              />
+            </View>
+            <TouchableOpacity
+              disabled={isSubmittingModeration}
+              onPress={closeModeration}
+              style={{padding: responsiveHeight(0.6)}}>
+              <Feather name="x" size={23} color={Colors.black} />
+            </TouchableOpacity>
+          </View>
+
+          {!moderationAction ? (
+            <View style={{gap: responsiveHeight(1.2), marginTop: responsiveHeight(2)}}>
+              <TouchableOpacity
+                onPress={() => setModerationAction('report')}
+                style={{
+                  minHeight: responsiveHeight(5.8),
+                  borderWidth: 1,
+                  borderColor: Colors.borderColor2,
+                  borderRadius: responsiveHeight(1),
+                  paddingHorizontal: responsiveHeight(1.5),
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: responsiveHeight(1.2),
+                }}>
+                <Feather name="flag" size={21} color={Colors.themeColor} />
+                <NormalText title="Report Post" fontWeight="600" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setModerationAction('block')}
+                style={{
+                  minHeight: responsiveHeight(5.8),
+                  borderWidth: 1,
+                  borderColor: Colors.borderColor2,
+                  borderRadius: responsiveHeight(1),
+                  paddingHorizontal: responsiveHeight(1.5),
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: responsiveHeight(1.2),
+                }}>
+                <Feather name="slash" size={21} color={Colors.delete} />
+                <NormalText
+                  title="Block User"
+                  color={Colors.delete}
+                  fontWeight="600"
+                />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={{marginTop: responsiveHeight(2)}}>
+              <View style={{gap: responsiveHeight(0.8)}}>
+                {reportReasons.map(reason => {
+                  const isSelected = selectedReason === reason;
+                  return (
+                    <TouchableOpacity
+                      key={reason}
+                      disabled={isSubmittingModeration}
+                      onPress={() => setSelectedReason(reason)}
+                      style={{
+                        minHeight: responsiveHeight(4.8),
+                        borderBottomWidth: 1,
+                        borderBottomColor: Colors.borderColor3,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}>
+                      <NormalText title={reason} fontSize={1.7} />
+                      <Feather
+                        name={isSelected ? 'check-circle' : 'circle'}
+                        size={20}
+                        color={
+                          isSelected ? Colors.themeColor : Colors.greyText3
+                        }
+                      />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <View
+                style={{
+                  flexDirection: 'row',
+                  gap: responsiveHeight(1),
+                  marginTop: responsiveHeight(2),
+                }}>
+                <TouchableOpacity
+                  disabled={isSubmittingModeration}
+                  onPress={() => {
+                    setModerationAction(null);
+                    setSelectedReason('');
+                  }}
+                  style={{
+                    flex: 1,
+                    height: responsiveHeight(5.5),
+                    borderWidth: 1,
+                    borderColor: Colors.borderColor2,
+                    borderRadius: responsiveHeight(1),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  <NormalText title="Back" fontWeight="600" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  disabled={!selectedReason || isSubmittingModeration}
+                  onPress={submitModeration}
+                  style={{
+                    flex: 1.5,
+                    height: responsiveHeight(5.5),
+                    borderRadius: responsiveHeight(1),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor:
+                      moderationAction === 'block'
+                        ? Colors.delete
+                        : Colors.themeColor,
+                    opacity: !selectedReason ? 0.45 : 1,
+                  }}>
+                  {isSubmittingModeration ? (
+                    <ActivityIndicator size="small" color={Colors.white} />
+                  ) : (
+                    <NormalText
+                      title={
+                        moderationAction === 'block'
+                          ? 'Block User'
+                          : 'Report Post'
+                      }
+                      color={Colors.white}
+                      fontWeight="700"
+                    />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+      </Modal>
       <View
         style={{
           borderWidth: 1.5,
@@ -158,7 +399,7 @@ const Post: React.FC<PostProps> = React.memo(({ item, commentLoading, handleLike
           }}
           source={{
             uri: `${IMAGE_URL}${item?.posts[0]}`,
-            priority: FastImage.priority.high,
+            priority: FastImage.priority.normal,
             cache: FastImage.cacheControl.immutable,
           }}
           resizeMode={FastImage.resizeMode.cover}
@@ -222,11 +463,12 @@ const Post: React.FC<PostProps> = React.memo(({ item, commentLoading, handleLike
           </View>
         ) : (
           <FlatList 
+            ref={commentsListRef}
+            onContentSizeChange={() => commentsListRef.current?.scrollToEnd({animated: true})}
             contentContainerStyle={{ flexGrow: 1, paddingVertical: responsiveHeight(2), gap: responsiveHeight(2) }} 
             data={item?.comment || []} 
             keyExtractor={(commentItem, index) => `comment-${commentItem?._id || index}`}
             renderItem={renderCommentItem}
-            removeClippedSubviews={true}
             maxToRenderPerBatch={10}
             windowSize={10}
           />

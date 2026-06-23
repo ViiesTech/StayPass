@@ -6,6 +6,7 @@ import {responsiveHeight, responsiveWidth} from '../../responsive_dimensions';
 import Slider from '../../components/Slider';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
   ImageBackground,
@@ -30,6 +31,8 @@ import {
 } from '../../redux/services/MainIntegration';
 import {IMAGE_URL} from '../../redux/constant';
 import MapView, {Marker} from 'react-native-maps';
+import {useSelector, useDispatch} from 'react-redux';
+import {logout, goToLogin} from '../../redux/slices';
 
 const slides = [
   {key: '1', image: images.slider1},
@@ -94,6 +97,8 @@ const roomsData = [
 ];
 const PropertyDetails = ({navigation, route}) => {
   const {_id} = route?.params;
+  const {isGuest} = useSelector(state => state?.persistedData);
+  const dispatch = useDispatch();
   const [getPropertyById, {data: propertyData, isLoading: isLoadingProperty}] =
     useLazyGetAllPropertiesQuery();
   const [
@@ -192,6 +197,13 @@ const PropertyDetails = ({navigation, route}) => {
   }, [propertyData]);
 
   const navigateToContactHandler = () => {
+    if (isGuest) {
+      Alert.alert('Login Required', 'Please log in to contact the seller.', [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'Login', onPress: () => dispatch(goToLogin())},
+      ]);
+      return;
+    }
     navigation?.navigate('ContactSeller', {
       ownerId: ownerId?._id,
       propertyId: _id,
@@ -742,13 +754,25 @@ an interactive society map"
             <CustomButton
               onPress={
                 category === 'VocationalRent'
-                  ? () =>
+                  ? () => {
+                      if (isGuest) {
+                        Alert.alert(
+                          'Login Required',
+                          'Please log in to leave a review.',
+                          [
+                            {text: 'Cancel', style: 'cancel'},
+                            {text: 'Login', onPress: () => dispatch(goToLogin())},
+                          ],
+                        );
+                        return;
+                      }
                       navigation.navigate(
                         'Ratings',
                         category === 'VocationalRent'
                           ? {propertyId: _id}
                           : {vendorId: ownerId},
-                      )
+                      );
+                    }
                   : navigateToContactHandler
               }
               children={

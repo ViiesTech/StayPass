@@ -1,13 +1,15 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {useEffect, useState} from 'react';
 import {
+  Alert,
   View,
   StyleSheet,
   TouchableOpacity,
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import {useSelector} from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
+import {logout, goToLogin} from '../../redux/slices';
 import Wrapper from '../../components/Wrapper';
 import Input from '../../utils/TextInput';
 import {BackHeader} from '../../components/Header';
@@ -34,12 +36,26 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {Calendar, CalendarList, Agenda} from 'react-native-calendars';
 
 const ReservationDetails = ({navigation, route}) => {
+  const dispatch = useDispatch();
+  const {isGuest} = useSelector(state => state?.persistedData);
   const {
     _id: userId,
     name: userName,
     phone: userPhone,
     email,
   } = useSelector(state => state?.persistedData?.user);
+  useEffect(() => {
+    if (isGuest) {
+      Alert.alert(
+        'Login Required',
+        'Please log in to make a reservation.',
+        [
+          {text: 'Cancel', style: 'cancel', onPress: () => navigation.goBack()},
+          {text: 'Login', onPress: () => dispatch(goToLogin())},
+        ],
+      );
+    }
+  }, [isGuest]);
 
   const {
     propertyId,

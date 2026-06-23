@@ -1,23 +1,38 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Wrapper from '../../components/Wrapper';
 import Input from '../../utils/TextInput';
 import {responsiveHeight, responsiveWidth} from '../../responsive_dimensions';
 import {BackHeader} from '../../components/Header';
 import {Colors} from '../../assets/colors';
 import Br from '../../utils/Br';
-import {ActivityIndicator, View} from 'react-native';
+import {Alert, ActivityIndicator, View} from 'react-native';
 import CustomButton from '../../components/Button';
 import {BoldText} from '../../components/Titles';
 import StarRating from 'react-native-star-rating-widget';
 import {useAddReviewMutation} from '../../redux/services/MainIntegration';
-import {useSelector} from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
+import {logout, goToLogin} from '../../redux/slices';
 import {ShowToast} from '../../GlobalFunctions';
 
 const Ratings = ({route, navigation}) => {
   const [totalStars, setTotalStars] = useState(4);
   const {vendorId = null, propertyId = null} = route?.params;
   const [msg, setMsg] = useState('');
+  const {isGuest} = useSelector(state => state?.persistedData);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    if (isGuest) {
+      Alert.alert(
+        'Login Required',
+        'Please log in to leave a review.',
+        [
+          {text: 'Cancel', style: 'cancel', onPress: () => navigation.goBack()},
+          {text: 'Login', onPress: () => dispatch(goToLogin())},
+        ],
+      );
+    }
+  }, [isGuest]);
   const [addReview, {isLoading}] = useAddReviewMutation();
   const {_id} = useSelector(state => state?.persistedData?.user);
 

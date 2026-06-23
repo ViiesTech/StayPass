@@ -1,6 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
-import {View, Text, FlatList, TouchableOpacity, StyleSheet} from 'react-native';
+import {View, Text, FlatList, TouchableOpacity, StyleSheet, Alert} from 'react-native';
 import React, {useState} from 'react';
+import {useSelector, useDispatch} from 'react-redux';
+import {logout, goToLogin} from '../../redux/slices';
 import Wrapper from '../../components/Wrapper';
 import Slider from '../../components/Slider';
 import {responsiveHeight, responsiveWidth} from '../../responsive_dimensions';
@@ -25,6 +27,8 @@ const data = [
   {id: 5, title: 'Mini Bar'},
 ];
 const RoomDetails = ({navigation, route}) => {
+  const {isGuest} = useSelector(state => state?.persistedData);
+  const dispatch = useDispatch();
   const sharedBathroomData = [
     {id: 1, title: 'Free toiletries'},
     {id: 2, title: 'Slippers'},
@@ -212,7 +216,14 @@ const RoomDetails = ({navigation, route}) => {
         </View>
 
         <CustomButton
-          onPress={() =>
+          onPress={() => {
+            if (isGuest) {
+              Alert.alert('Login Required', 'Please log in to reserve a room.', [
+                {text: 'Cancel', style: 'cancel'},
+                {text: 'Login', onPress: () => dispatch(goToLogin())},
+              ]);
+              return;
+            }
             navigation.navigate('ReservationDetails', {
               propertyId,
               _id,
@@ -221,8 +232,8 @@ const RoomDetails = ({navigation, route}) => {
               pricePerNight,
               serviceCharges,
               ownerId,
-            })
-          }
+            });
+          }}
           children="Reserve Room"
           style={{
             backgroundColor: Colors.theme3,

@@ -1,13 +1,12 @@
 /* eslint-disable react-native/no-inline-styles */
 import {
+  Alert,
   View,
-  Text,
-  Image,
   TouchableOpacity,
-  FlatList,
   ActivityIndicator,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
+import FastImage from 'react-native-fast-image';
 import Wrapper from '../../components/Wrapper';
 import {BackHeader} from '../../components/Header';
 import Br from '../../utils/Br';
@@ -20,16 +19,36 @@ import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import CustomButton from '../../components/Button';
 import {pickImage, ShowToast} from '../../GlobalFunctions';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import {useSelector} from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
+import {goToLogin} from '../../redux/slices';
 import {useCreatePostMutation} from '../../redux/services/MainIntegration';
 import {IMAGE_URL} from '../../redux/constant';
+import SafeFastImage from '../../components/SafeFastImage';
+import {
+  containsObjectionableContent,
+  objectionableContentMessage,
+} from '../../utils/contentModeration';
 const CreatePost = ({navigation}) => {
-  const [image, setImage] = useState(null);
+  const dispatch = useDispatch();
+  const {isGuest} = useSelector(state => state?.persistedData);
   const {
     _id,
     image: userImage,
     name: userName,
-  } = useSelector(state => state.persistedData.user);
+  } = useSelector(state => state?.persistedData?.user);
+  useEffect(() => {
+    if (isGuest) {
+      Alert.alert(
+        'Login Required',
+        'Please log in to create a post.',
+        [
+          {text: 'Cancel', style: 'cancel', onPress: () => navigation.goBack()},
+          {text: 'Login', onPress: () => dispatch(goToLogin())},
+        ],
+      );
+    }
+  }, [dispatch, isGuest, navigation]);
+  const [image, setImage] = useState(null);
   const [createPost, {isLoading}] = useCreatePostMutation();
   const [caption, setCaption] = useState('');
   console.log('caption', caption);
@@ -46,7 +65,7 @@ const CreatePost = ({navigation}) => {
   };
   const renderImage = () => (
     <View>
-      <Image
+      <SafeFastImage
         source={{uri: image.uri}}
         style={{
           width: responsiveWidth(33),
@@ -54,7 +73,7 @@ const CreatePost = ({navigation}) => {
           borderRadius: responsiveHeight(1),
           margin: responsiveHeight(1),
         }}
-        resizeMode="cover"
+        resizeMode={FastImage.resizeMode.cover}
       />
       <TouchableOpacity
         onPress={handleRemoveImage}
@@ -72,6 +91,11 @@ const CreatePost = ({navigation}) => {
   );
 
   const createPostHandler = async () => {
+    if (containsObjectionableContent(caption)) {
+      ShowToast('error', objectionableContentMessage);
+      return;
+    }
+
     const formData = new FormData();
 
     formData.append('userId', _id);
@@ -111,7 +135,7 @@ const CreatePost = ({navigation}) => {
           alignItems: 'center',
           gap: responsiveHeight(2),
         }}>
-        <Image
+        <SafeFastImage
           style={{
             height: responsiveHeight(5),
             width: responsiveWidth(10),
@@ -120,6 +144,7 @@ const CreatePost = ({navigation}) => {
           source={
             userImage ? {uri: `${IMAGE_URL}${userImage}`} : images.userDummy
           }
+          resizeMode={FastImage.resizeMode.cover}
         />
         <View>
           <BoldText title={userName || 'N/A'} fontWeight="500" fontSize={2} />

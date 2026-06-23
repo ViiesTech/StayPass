@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import {View, Text, ActivityIndicator} from 'react-native';
+import {Alert, View, Text, ActivityIndicator} from 'react-native';
 import React, {useEffect} from 'react';
 import Wrapper from '../../components/Wrapper';
 import {responsiveHeight} from '../../responsive_dimensions';
@@ -9,8 +9,26 @@ import {BoldText, NormalText} from '../../components/Titles';
 import {Colors} from '../../assets/colors';
 import {useLazyGetWalletByUserIdQuery} from '../../redux/services/MainIntegration';
 import {ShowToast} from '../../GlobalFunctions';
+import {useNavigation} from '@react-navigation/native';
+import {useSelector, useDispatch} from 'react-redux';
+import {logout, goToLogin} from '../../redux/slices';
 
 const MyWallet = () => {
+  const navigation = useNavigation();
+  const {isGuest} = useSelector(state => state?.persistedData);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    if (isGuest) {
+      Alert.alert(
+        'Login Required',
+        'Please log in to access your wallet.',
+        [
+          {text: 'Cancel', style: 'cancel', onPress: () => navigation.goBack()},
+          {text: 'Login', onPress: () => dispatch(goToLogin())},
+        ],
+      );
+    }
+  }, [isGuest]);
   const [getWalletByUserId, {data, isLoading}] =
     useLazyGetWalletByUserIdQuery();
   useEffect(() => {

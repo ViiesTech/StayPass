@@ -49,7 +49,7 @@ const Background = ({
   };
 
   return (
-    <SafeAreaView style={[styles.safeAreaView, containerStyle]}>
+    <SafeAreaView edges={['top']} style={[styles.safeAreaView, containerStyle]}>
       <KeyboardView>
         {noScroll ? (
           children

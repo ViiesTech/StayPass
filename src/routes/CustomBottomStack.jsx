@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
-import {View, TouchableOpacity, StyleSheet} from 'react-native';
+import {Alert, View, TouchableOpacity, StyleSheet} from 'react-native';
 import Svg, {Path} from 'react-native-svg';
 import Entypo from 'react-native-vector-icons/Entypo';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
@@ -9,8 +9,14 @@ import {Colors} from '../assets/colors';
 import {responsiveHeight, responsiveWidth} from '../responsive_dimensions';
 import {NormalText} from '../components/Titles';
 import {useNavigation} from '@react-navigation/native';
+import {useSelector, useDispatch} from 'react-redux';
+import {logout, goToLogin} from '../redux/slices';
+
+const PROTECTED_TABS = ['Profile', 'Queries'];
 
 const CustomBottomStack = ({state, descriptors, navigation}) => {
+  const {isGuest} = useSelector(s => s?.persistedData);
+  const dispatch = useDispatch();
   if (!state) return null;
   const WIDTH = responsiveWidth(100);
   const HEIGHT = 70; // slightly taller to hold the curve
@@ -66,7 +72,20 @@ Z
           return (
             <TouchableOpacity
               key={item.name}
-              onPress={() => navigation.navigate(item.name)}
+              onPress={() => {
+                if (isGuest && PROTECTED_TABS.includes(item.name)) {
+                  Alert.alert(
+                    'Login Required',
+                    'Please log in to access this feature.',
+                    [
+                      {text: 'Cancel', style: 'cancel'},
+                      {text: 'Login', onPress: () => dispatch(goToLogin())},
+                    ],
+                  );
+                  return;
+                }
+                navigation.navigate(item.name);
+              }}
               style={styles.tab}>
               <IconName
                 name={item.iconName}

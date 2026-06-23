@@ -20,20 +20,22 @@ import Background from '../../utils/Background';
 import {
   responsiveFontSize,
   responsiveHeight,
-  responsiveWidth,
 } from '../../responsive_dimensions';
 import Input2 from '../../components/Input2';
 import {Colors} from '../../assets/colors';
-import {NormalText} from '../../components/Titles';
-import {icons} from '../../assets/icons';
 import {useLoginMutation} from '../../redux/services';
 import {ShowToast} from '../../GlobalFunctions';
+import {useDispatch} from 'react-redux';
+import {setGuestMode} from '../../redux/slices';
+import UGCPolicyAgreement from '../../components/UGCPolicyAgreement';
 
 const Login = ({navigation}) => {
   const [toggleCheckBox, setToggleCheckBox] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
   const [login, {isLoading}] = useLoginMutation();
+  const dispatch = useDispatch();
   const onLoginPress = async () => {
     if (!email) {
       ShowToast('error', 'Please enter your email');
@@ -41,6 +43,10 @@ const Login = ({navigation}) => {
     }
     if (!password) {
       ShowToast('error', 'Please enter your password');
+      return;
+    }
+    if (!termsAccepted) {
+      ShowToast('error', 'Please accept the StayPass Terms to continue');
       return;
     }
     let data = {
@@ -89,6 +95,11 @@ const Login = ({navigation}) => {
               placeholder={'Enter your password'}
             />
             <Br space={1} />
+            <UGCPolicyAgreement
+              accepted={termsAccepted}
+              onChange={setTermsAccepted}
+              compact
+            />
             <CustomButton
               // onPress={() => {
               //   navigation.navigate('CreateProfile');
@@ -132,7 +143,7 @@ const Login = ({navigation}) => {
                 </Pera>
               </TouchableOpacity>
             </View>
-            <View
+            {/* <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -155,13 +166,12 @@ const Login = ({navigation}) => {
                   width: responsiveWidth(23),
                 }}
               />
-            </View>
+            </View> */}
             <Br space={0.01} />
-
-            <CustomButton
+            {/* <CustomButton
               iconName={icons.google}
               style={{
-                backgroundColor: Colors.white,
+                backgroundColor: 'transparent',
                 borderColor: Colors.black,
                 borderWidth: 1.4,
               }}
@@ -170,17 +180,7 @@ const Login = ({navigation}) => {
                 navigation.navigate('SelectProfile');
               }}
               children={'Continue with Google'}
-            />
-            <CustomButton
-              iconName={icons.apple}
-              iconSize={30}
-              style={{backgroundColor: Colors.black}}
-              txtColor={Colors.white}
-              onPress={() => {
-                navigation.navigate('SelectProfile');
-              }}
-              children={'Continue with Apple'}
-            />
+            /> */}
             <View style={loginStyle.bottomConfiner}>
               <Pera style={{fontSize: responsiveFontSize(1.8)}}>
                 Don't have an account?
@@ -193,6 +193,15 @@ const Login = ({navigation}) => {
                 </Pera>
               </TouchableOpacity>
             </View>
+            <TouchableOpacity
+              onPress={() => dispatch(setGuestMode())}
+              style={loginStyle.guestButton}>
+              <Pera
+                color={Colors.greyText5}
+                style={{fontSize: responsiveFontSize(1.8)}}>
+                Browse as Guest
+              </Pera>
+            </TouchableOpacity>
           </View>
         </Wrapper>
       </Background>
@@ -222,6 +231,10 @@ const loginStyle = StyleSheet.create({
     alignItems: 'center',
     gap: wp('2%'),
     alignSelf: 'center',
+  },
+  guestButton: {
+    alignSelf: 'center',
+    paddingVertical: hp('1%'),
   },
 });
 export default Login;

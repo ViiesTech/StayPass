@@ -6,8 +6,11 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
+import {useSelector, useDispatch} from 'react-redux';
+import {logout, goToLogin} from '../../redux/slices';
 import Wrapper from '../../components/Wrapper';
 import {BackHeader} from '../../components/Header';
 import {responsiveHeight, responsiveWidth} from '../../responsive_dimensions';
@@ -28,6 +31,8 @@ import {
 } from '../../redux/services/MainIntegration';
 import {IMAGE_URL} from '../../redux/constant';
 const SellerProfile = ({navigation, route}) => {
+  const {isGuest} = useSelector(state => state?.persistedData);
+  const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState({
     id: 1,
     title: 'Sale',
@@ -56,15 +61,15 @@ const SellerProfile = ({navigation, route}) => {
     image,
     email,
     phone,
-    forLease,
-    forRent,
+    forLease = 0,
+    forRent = 0,
     locationName,
-    forSale,
+    forSale = 0,
     avgRating = 0,
-    forVocationalRent,
+    forVocationalRent = 0,
   } = ownerDetails || {};
   console.log('sellerData', sellerData);
-  const [getPropertyById, {data: propertyData, isLoading: isLoadingProperty}] =
+  const [getPropertyById, {data: propertyData, isFetching: isLoadingProperty}] =
     useLazyGetAllPropertiesQuery();
   const ownerProperty = propertyData?.data;
   const [getAllReviews, {data: reviewsData}] = useLazyGetAllReviewsQuery();
@@ -90,7 +95,7 @@ const SellerProfile = ({navigation, route}) => {
   ];
 
   useEffect(() => {
-    getPropertyById({ownerId: _id, category: activeTab.value})
+    getPropertyById({ownerId: _id, category: activeTab.value}, true)
       .unwrap()
       .then(res => console.log('Property:', res))
       .catch(err => console.log(err));
@@ -142,9 +147,21 @@ const SellerProfile = ({navigation, route}) => {
                 mrgnTop={0.3}
                 color={Colors.theme4}
                 fontWeight="500"
-                title={`${
-                  forSale + forRent + forVocationalRent + forLease
-                } Properties Uploaded`}
+                title={(() => {
+                  if (
+                    [forSale, forRent, forVocationalRent, forLease].every(
+                      v => v === undefined || v === null,
+                    )
+                  ) {
+                    return 'N/A Properties Uploaded';
+                  }
+                  const total =
+                    (Number(forSale) || 0) +
+                    (Number(forRent) || 0) +
+                    (Number(forVocationalRent) || 0) +
+                    (Number(forLease) || 0);
+                  return `${total} ${total === 1 ? 'Property' : 'Properties'} Uploaded`;
+                })()}
               />
               <View
                 style={{
@@ -291,7 +308,11 @@ const SellerProfile = ({navigation, route}) => {
               marginTop: responsiveHeight(3),
             }}>
             <BoldText title="About Seller" />
-            <NormalText mrgnTop={1} color="#44535E" title={bio ? bio : ''} />
+            <NormalText
+              mrgnTop={1}
+              color="#44535E"
+              title={bio ? bio : 'No description provided by the seller.'}
+            />
           </View>
           <Br space={2} />
           <View
@@ -355,6 +376,21 @@ const SellerProfile = ({navigation, route}) => {
               renderItem={({item, index}) => {
                 return <PropertiesCards data={item} />;
               }}
+              ListEmptyComponent={
+                isLoadingProperty ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={Colors.themeColor}
+                    style={{marginVertical: responsiveHeight(2)}}
+                  />
+                ) : (
+                  <NormalText
+                    color={Colors.greyText3}
+                    title={`No properties listed under ${activeTab.title}.`}
+                    style={{textAlign: 'center', marginVertical: responsiveHeight(2)}}
+                  />
+                )
+              }
             />
           </View>
           {propertyReviews?.length ? (
@@ -381,7 +417,16 @@ const SellerProfile = ({navigation, route}) => {
           ) : null}
 
           <CustomButton
-            onPress={() => navigation.navigate('Ratings', {vendorId: _id})}
+            onPress={() => {
+              if (isGuest) {
+                Alert.alert('Login Required', 'Please log in to leave a review.', [
+                  {text: 'Cancel', style: 'cancel'},
+                  {text: 'Login', onPress: () => dispatch(goToLogin())},
+                ]);
+                return;
+              }
+              navigation.navigate('Ratings', {vendorId: _id});
+            }}
             style={{
               marginTop: responsiveHeight(4),
               backgroundColor: Colors.theme3,

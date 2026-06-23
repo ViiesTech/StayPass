@@ -17,19 +17,16 @@ import {
 } from 'react-native-responsive-screen';
 import Br from '../../utils/Br';
 import CustomButton from '../../components/Button';
-import CheckBox from 'react-native-check-box';
 import Background from '../../utils/Background';
 import {
   responsiveFontSize,
   responsiveHeight,
-  responsiveWidth,
 } from '../../responsive_dimensions';
 import Input2 from '../../components/Input2';
 import {Colors} from '../../assets/colors';
-import {NormalText} from '../../components/Titles';
-import {icons} from '../../assets/icons';
 import {ShowToast} from '../../GlobalFunctions';
 import {useRegisterMutation} from '../../redux/services';
+import UGCPolicyAgreement from '../../components/UGCPolicyAgreement';
 
 const Signup = ({navigation}) => {
   const [toggleCheckBox, setToggleCheckBox] = useState(false);
@@ -138,23 +135,10 @@ const Signup = ({navigation}) => {
             />
             <Br space={1} />
             <View style={loginStyle.checkBoxConfiner}>
-              <View style={loginStyle.rememberContainer}>
-                <CheckBox
-                  checkBoxColor={Color('button')}
-                  checkedCheckBoxColor={Color('button')}
-                  onClick={() => {
-                    setToggleCheckBox(!toggleCheckBox);
-                  }}
-                  isChecked={toggleCheckBox}
-                />
-                <Pera
-                  style={{fontSize: responsiveFontSize(1.8), flex: 1}}
-                  color="#3B4B68">
-                  By signing up, you agree to Staypass Terms of Use and Privacy
-                  Policy. By providing your email, you consent to receive
-                  communications from Stay pass. You can opt-out anytime.
-                </Pera>
-              </View>
+              <UGCPolicyAgreement
+                accepted={toggleCheckBox}
+                onChange={setToggleCheckBox}
+              />
             </View>
             <CustomButton
               // onPress={() => {
@@ -170,8 +154,7 @@ const Signup = ({navigation}) => {
               }
             />
             <Br space={0.01} />
-
-            <View
+            {/* <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -194,10 +177,9 @@ const Signup = ({navigation}) => {
                   width: responsiveWidth(23),
                 }}
               />
-            </View>
+            </View> */}
             <Br space={0.01} />
-
-            <CustomButton
+            {/* <CustomButton
               iconName={icons.google}
               style={{
                 backgroundColor: Colors.white,
@@ -209,17 +191,7 @@ const Signup = ({navigation}) => {
                 navigation.navigate('SelectProfile');
               }}
               children={'Continue with Google'}
-            />
-            <CustomButton
-              iconName={icons.apple}
-              iconSize={30}
-              style={{backgroundColor: Colors.black}}
-              txtColor={Colors.white}
-              onPress={() => {
-                navigation.navigate('SelectProfile');
-              }}
-              children={'Continue with Apple'}
-            />
+            /> */}
             <View style={loginStyle.bottomConfiner}>
               <Pera style={{fontSize: responsiveFontSize(1.8)}}>
                 Already have an account?

@@ -1,13 +1,14 @@
 /* eslint-disable react-native/no-inline-styles */
 import {
+  Alert,
   View,
   Text,
   TouchableOpacity,
   Platform,
-  Image,
   ActivityIndicator,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
+import FastImage from 'react-native-fast-image';
 import Wrapper from '../../components/Wrapper';
 import {BackHeader} from '../../components/Header';
 import Br from '../../utils/Br';
@@ -21,18 +22,32 @@ import CustomButton from '../../components/Button';
 import {pickImage, ShowToast} from '../../GlobalFunctions';
 import Feather from 'react-native-vector-icons/Feather';
 import {images} from '../../assets/images';
-import {useSelector} from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
+import {logout, goToLogin} from '../../redux/slices';
 import {IMAGE_URL} from '../../redux/constant';
 import {useUpdateProfileMutation} from '../../redux/services';
 import moment from 'moment';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import SafeFastImage from '../../components/SafeFastImage';
 
 const EditProfile = ({navigation}) => {
-  // const [showPicker, setShowPicker] = useState(false);
-  const [checkInDate, setCheckInDate] = useState(null);
+  const {isGuest} = useSelector(state => state?.persistedData);
   const {email, name, image, phone, city, DOB, _id} = useSelector(
     state => state?.persistedData?.user,
   );
+  const dispatch = useDispatch();
+  useEffect(() => {
+    if (isGuest) {
+      Alert.alert(
+        'Login Required',
+        'Please log in to edit your profile.',
+        [
+          {text: 'Cancel', style: 'cancel', onPress: () => navigation.goBack()},
+          {text: 'Login', onPress: () => dispatch(goToLogin())},
+        ],
+      );
+    }
+  }, [isGuest]);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
   const [imgPath, setImgPath] = useState(null);
@@ -136,7 +151,7 @@ const EditProfile = ({navigation}) => {
           gap: responsiveHeight(2.5),
         }}>
         <View style={{alignSelf: 'center'}}>
-          <Image
+          <SafeFastImage
             source={
               imgPath
                 ? {uri: imgPath?.uri}
@@ -147,9 +162,9 @@ const EditProfile = ({navigation}) => {
             style={{
               height: responsiveHeight(15.2),
               width: responsiveWidth(Platform.OS === 'android' ? 30.5 : 32),
-              resizeMode: 'cover',
               borderRadius: responsiveHeight(10),
             }}
+            resizeMode={FastImage.resizeMode.cover}
           />
           <TouchableOpacity
             onPress={handlePickImage}

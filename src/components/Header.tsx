@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import { View, TouchableOpacity, Image, StyleSheet, FlatList, ScrollView, Platform, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, Image, StyleSheet, Alert, FlatList, ScrollView, Platform, ActivityIndicator } from 'react-native';
 import React, { useState } from 'react';
 import { responsiveHeight, responsiveWidth } from '../responsive_dimensions';
 import { icons } from '../assets/icons';
@@ -12,7 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import CustomButton from './Button';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../redux/slices';
+import { logout, goToLogin } from '../redux/slices';
 import { IMAGE_URL } from '../redux/constant';
 import { useDeleteAccountMutation } from '../redux/services';
 import { ShowToast } from '../GlobalFunctions';
@@ -32,14 +32,38 @@ export const Header: React.FC<HeaderProps> = ({ onPress, title, style }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const { name, email, image, _id } = useSelector((state) => state?.persistedData?.user);
-  const { token } = useSelector((state) => state?.persistedData);
-  console.log('token', token)
+  const { token, isGuest } = useSelector((state) => state?.persistedData);
+
   const [deleteAccount, { isLoading }] = useDeleteAccountMutation();
   const dispatch = useDispatch();
 
   const handleNavigation = (screen) => {
-    setModalVisible(!modalVisible);
+    setModalVisible(false);
     navigation.navigate(screen);
+  };
+
+  const PROTECTED_SCREENS = ['MyProfile','MyFavrts','MyWallet','MyBookings','MyCards','MyPost','ContactForm'];
+
+  const handleDrawerPress = (item) => {
+    if (item.id === 11) {
+      if (isGuest) {
+        Alert.alert('Login Required', 'Please log in to delete an account.', [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Login', onPress: () => { setModalVisible(false); dispatch(goToLogin()); } },
+        ]);
+        return;
+      }
+      setDeleteModalVisible(true);
+      return;
+    }
+    if (isGuest && PROTECTED_SCREENS.includes(item.navigateTo)) {
+      Alert.alert('Login Required', 'Please log in to access this feature.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Login', onPress: () => { setModalVisible(false); dispatch(goToLogin()); } },
+      ]);
+      return;
+    }
+    handleNavigation(item.navigateTo);
   };
   const data = [
     { id: 1, title: 'Home', navigateTo: 'BottomStack' },
@@ -54,6 +78,7 @@ export const Header: React.FC<HeaderProps> = ({ onPress, title, style }) => {
     { id: 10, title: 'Contact Us', navigateTo: 'ContactForm' },
     { id: 11, title: 'Delete Account', navigateTo: '' },
   ];
+  const drawerData = isGuest ? data.filter(item => item.id !== 11) : data;
 
   const DeleteAccountHandler = async () => {
     setDeleteModalVisible(false);
@@ -120,17 +145,17 @@ export const Header: React.FC<HeaderProps> = ({ onPress, title, style }) => {
           <View style={{ paddingLeft: responsiveHeight(4), paddingVertical: responsiveHeight(2) }}>
             <View style={{ width: responsiveWidth(30) }}>
               <View style={{ padding: responsiveHeight(0.3), borderWidth: 2, borderColor: Colors.borderColor5, borderRadius: responsiveHeight(10) }}>
-                <Image source={image ? { uri: `${IMAGE_URL}${image}` } : images.userDummy} style={{ height: responsiveHeight(13.2), width: responsiveWidth(27.5), resizeMode: 'cover', borderRadius: responsiveHeight(10) }} />
+                <Image source={!isGuest && image ? { uri: `${IMAGE_URL}${image}` } : images.userDummy} style={{ height: responsiveHeight(13.2), width: responsiveWidth(27.5), resizeMode: 'cover', borderRadius: responsiveHeight(10) }} />
               </View>
             </View>
 
             <View style={{ marginTop: responsiveHeight(2) }}>
-              <BoldText title={name} fontWeight="700" fontSize={2.4} color={Colors.black} />
-              <NormalText fontWeight="500" title={email} fontSize={2} color={Colors.black} />
+              <BoldText title={isGuest ? 'Guest' : name} fontWeight="700" fontSize={2.4} color={Colors.black} />
+              {!isGuest && <NormalText fontWeight="500" title={email} fontSize={2} color={Colors.black} />}
               <View style={{ marginTop: responsiveHeight(2) }}>
-                <FlatList data={data} renderItem={({ item, index }) => {
+                <FlatList data={drawerData} renderItem={({ item, index }) => {
                   return (
-                    <TouchableOpacity style={styles.listContainer} onPress={() => { item.id === 11 ? setDeleteModalVisible(true) : handleNavigation(item.navigateTo); }}>
+                    <TouchableOpacity style={styles.listContainer} onPress={() => handleDrawerPress(item)}>
                       <NormalText fontWeight="600" title={item.title} fontSize={2} color={Colors.black} />
                     </TouchableOpacity>
                   );
@@ -140,8 +165,8 @@ export const Header: React.FC<HeaderProps> = ({ onPress, title, style }) => {
 
           </View>
           <View style={{ flex: Platform.OS === 'android' ? 0.8 : 0.6, justifyContent: 'flex-end' }}>
-            <TouchableOpacity onPress={() => dispatch(logout())} style={{ borderTopRightRadius: responsiveHeight(4), borderBottomRightRadius: responsiveHeight(4), backgroundColor: Colors.themeColor, width: responsiveWidth(50), paddingVertical: responsiveHeight(1.8) }}>
-              <NormalText fontWeight="700" color={Colors.white} alignSelf="center" title="Logout" />
+            <TouchableOpacity onPress={() => isGuest ? dispatch(goToLogin()) : dispatch(logout())} style={{ borderTopRightRadius: responsiveHeight(4), borderBottomRightRadius: responsiveHeight(4), backgroundColor: Colors.themeColor, width: responsiveWidth(50), paddingVertical: responsiveHeight(1.8) }}>
+              <NormalText fontWeight="700" color={Colors.white} alignSelf="center" title={isGuest ? 'Login' : 'Logout'} />
             </TouchableOpacity>
           </View>
         </ScrollView>

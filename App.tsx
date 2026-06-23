@@ -13,7 +13,6 @@ import {responsiveHeight} from './src/responsive_dimensions';
 import Routes from './src/routes/Routes';
 import {persistor, store} from './src/redux/store';
 // import {StripeProvider} from '@stripe/stripe-react-native';
-import {PUBLISHABLE_KEY} from './src/redux/constant';
 
 export default function MobileApp() {
   useEffect(() => {
@@ -28,17 +27,17 @@ export default function MobileApp() {
           merchantIdentifier="merchant.com.myapp.payment" // iOS only
           urlScheme="com.myapp" // required for 3D Secure redirects
         > */}
-          <SafeAreaView
-            style={{
-              flexGrow: 1,
-              backgroundColor: Colors.white,
-              paddingTop: Platform.OS === 'ios' ? responsiveHeight(4) : 0,
-            }}>
-            <NavigationContainer>
-              <Routes />
-            </NavigationContainer>
-            <Toast position="top" />
-          </SafeAreaView>
+        <SafeAreaView
+          style={{
+            flexGrow: 1,
+            backgroundColor: Colors.white,
+            paddingTop: Platform.OS === 'ios' ? responsiveHeight(4) : 0,
+          }}>
+          <NavigationContainer>
+            <Routes />
+          </NavigationContainer>
+          <Toast position="top" />
+        </SafeAreaView>
         {/* </StripeProvider> */}
       </PersistGate>
     </Provider>

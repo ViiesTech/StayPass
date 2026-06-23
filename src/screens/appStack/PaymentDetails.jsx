@@ -1,6 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {useState, useEffect, useRef} from 'react';
 import {
+  Alert,
   View,
   FlatList,
   TouchableOpacity,
@@ -20,7 +21,8 @@ import Entypo from 'react-native-vector-icons/Entypo';
 import CustomButton from '../../components/Button';
 import Modal from 'react-native-modal';
 import ResponseModal from '../../components/ResponseModal';
-import {useSelector} from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
+import {logout, goToLogin} from '../../redux/slices';
 import {WebView} from 'react-native-webview';
 import {ShowToast} from '../../GlobalFunctions';
 import {
@@ -33,6 +35,17 @@ import {
 import {icons} from '../../assets/icons';
 
 const PaymentDetails = ({navigation, route}) => {
+  const dispatch = useDispatch();
+  const {isGuest} = useSelector(state => state?.persistedData);
+  const {_id} = useSelector(state => state?.persistedData?.user);
+  useEffect(() => {
+    if (isGuest) {
+      Alert.alert('Login Required', 'Please log in to proceed with payment.', [
+        {text: 'Cancel', style: 'cancel', onPress: () => navigation.goBack()},
+        {text: 'Login', onPress: () => dispatch(goToLogin())},
+      ]);
+    }
+  }, [isGuest]);
   const [selectedCard, setSelectedCard] = useState(1);
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] =
     useState('wallet');
@@ -51,7 +64,6 @@ const PaymentDetails = ({navigation, route}) => {
   const [isProcessingWallet, setIsProcessingWallet] = useState(false);
   const [paystackTimeoutReached, setPaystackTimeoutReached] = useState(false);
 
-  const {_id} = useSelector(state => state?.persistedData?.user);
   const {
     propertyId,
     roomId,
@@ -176,7 +188,9 @@ const PaymentDetails = ({navigation, route}) => {
         console.log('authUrl', authUrl);
 
         setPaystackReference(reference);
-        if (authUrl) setPaystackAuthUrl(authUrl);
+        if (authUrl) {
+          setPaystackAuthUrl(authUrl);
+        }
         setPaystackVisible(true);
       } catch {
         ShowToast('error', 'Failed to initialize Paystack');

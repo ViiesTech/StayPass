@@ -8,13 +8,13 @@ import {useSelector} from 'react-redux';
 
 const Routes = () => {
   const Stack = createNativeStackNavigator();
-  const {token, user} = useSelector(state => state?.persistedData);
+  const {token, user, isGuest} = useSelector(state => state?.persistedData);
 
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
-      {!token ? (
+      {!token && !isGuest ? (
         <Stack.Screen name="Auth" component={Auth} />
-      ) : !user?.isCreated ? (
+      ) : !isGuest && !user?.isCreated ? (
         <Stack.Screen name="CreateProfile" component={CreateProfile} />
       ) : (
         <Stack.Screen name="Main" component={Main} />

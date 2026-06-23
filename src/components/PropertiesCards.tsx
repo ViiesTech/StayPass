@@ -1,5 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import {
+  Alert,
   View,
   Text,
   TouchableOpacity,
@@ -20,7 +21,8 @@ import {useNavigation} from '@react-navigation/native';
 import {IMAGE_URL} from '../redux/constant';
 import {useAddToFvrtMutation} from '../redux/services/MainIntegration';
 import {ShowToast} from '../GlobalFunctions';
-import {useSelector} from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
+import {logout, goToLogin} from '../redux/slices';
 
 interface PropertyCardsProps {
   containerWidth?: number;
@@ -48,21 +50,33 @@ const PropertiesCards: React.FC<PropertyCardsProps> = ({
   // console.log('_id', _id);
 
   const navigation = useNavigation();
-  const {_id} = useSelector(state => state?.persistedData?.user);
+  const { isGuest,user} = useSelector(state => state?.persistedData);
+  const dispatch = useDispatch();
 
   // Temporary UI state
   const [isFvrt, setIsFvrt] = useState(
-    data?.favoriteBy?.includes(_id) || false,
+    data?.favoriteBy?.includes(user?._id) || false,
   );
 
   const [addToFvrt] = useAddToFvrtMutation();
   const handleToggle = async () => {
+    if (isGuest) {
+      Alert.alert(
+        'Login Required',
+        'Please log in to add to favourites.',
+        [
+          {text: 'Cancel', style: 'cancel'},
+          {text: 'Login', onPress: () => dispatch(goToLogin())},
+        ],
+      );
+      return;
+    }
     // 1️⃣ Instant UI update
     setIsFvrt(prev => !prev);
 
     // 2️⃣ Fire API in background (no need to wait)
     try {
-      await addToFvrt({propertyId: data._id, userId: _id})
+      await addToFvrt({propertyId: data._id, userId: user?._id})
         .unwrap()
         .then(res => {
           console.log('res', res);

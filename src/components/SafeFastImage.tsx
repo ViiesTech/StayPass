@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Image, ImageStyle, ViewStyle } from 'react-native';
+import {Image, ImageStyle, ViewStyle} from 'react-native';
+import FastImage from 'react-native-fast-image';
 
 interface SafeFastImageProps {
   source?: any;
@@ -13,15 +14,15 @@ interface SafeFastImageProps {
   [key: string]: any;
 }
 
-const SafeFastImage: React.FC<SafeFastImageProps> = ({ 
+const SafeFastImage: React.FC<SafeFastImageProps> = ({
   fallback = false,
   resizeMode,
   priority,
   cache,
-  ...props 
+  ...props
 }) => {
   const [hasError, setHasError] = React.useState(false);
-  
+
   // Convert FastImage resizeMode to Image resizeMode
   const convertResizeMode = (mode: string) => {
     switch (mode) {
@@ -57,13 +58,12 @@ const SafeFastImage: React.FC<SafeFastImageProps> = ({
 
   try {
     // Try to dynamically import FastImage
-    const FastImage = require('react-native-fast-image');
-    
+
     return (
-      <FastImage.default
+      <FastImage
         {...props}
-        resizeMode={resizeMode || FastImage.default.resizeMode.cover}
-        priority={priority || FastImage.default.priority.normal}
+        resizeMode={resizeMode || FastImage.resizeMode.cover}
+        priority={priority || FastImage.priority.normal}
         cache={cache}
         onError={handleError}
       />

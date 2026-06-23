@@ -4,8 +4,9 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
-import React, {useEffect, useState, useRef, useCallback} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Wrapper from '../../components/Wrapper';
 import {responsiveHeight, responsiveWidth} from '../../responsive_dimensions';
 import {Header} from '../../components/Header';
@@ -13,32 +14,59 @@ import {images} from '../../assets/images';
 import Post from '../../components/Post';
 import {Colors} from '../../assets/colors';
 import {BoldText, NormalText} from '../../components/Titles';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import {
   useAddCommentMutation,
+  useBlockUserMutation,
   useLazyGetAllPostsQuery,
   useLikePostMutation,
+  useReportPostMutation,
 } from '../../redux/services/MainIntegration';
-import {useSelector} from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
+import {goToLogin} from '../../redux/slices';
 import {ShowToast} from '../../GlobalFunctions';
-import {useFocusEffect, useIsFocused} from '@react-navigation/native';
+import {useIsFocused} from '@react-navigation/native';
 import SafeFastImage from '../../components/SafeFastImage';
 import {IMAGE_URL} from '../../redux/constant';
 import FastImage from 'react-native-fast-image';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import {
+  containsObjectionableContent,
+  objectionableContentMessage,
+} from '../../utils/contentModeration';
 const Community = ({navigation}) => {
   const [getAllPosts, {isLoading, data, error}] = useLazyGetAllPostsQuery();
   const [likePost, {isLoading: likeLoading}] = useLikePostMutation();
   const [likeChanged, setLikeChanged] = useState(false);
   const postData = data?.data;
-  const {name, image, _id} = useSelector(state => state.persistedData.user);
+  const {name, image, _id} = useSelector(
+    state => state.persistedData.user,
+  );
+  const {isGuest} = useSelector(state => state.persistedData);
+  const dispatch = useDispatch();
   const [comment, setComment] = useState('');
+  const [isRefreshingFeed, setIsRefreshingFeed] = useState(false);
   const [addComment, {isLoading: commentLoading}] = useAddCommentMutation();
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [blockUser] = useBlockUserMutation();
+  const [reportPost] = useReportPostMutation();
   const isMounted = useRef(true);
   const focus = useIsFocused();
 
-  console.log('name', name, image);
+  const refreshFeedAfterModeration = async successMessage => {
+    setIsRefreshingFeed(true);
+    try {
+      await getAllPosts().unwrap();
+      ShowToast('success', successMessage);
+    } catch (error) {
+      ShowToast(
+        'error',
+        error?.data?.message || 'Unable to refresh the community feed.',
+      );
+    } finally {
+      setIsRefreshingFeed(false);
+    }
+  };
+
+  console.log('_id=====', _id, image);
   // const postData = [
   //   {
   //     id: 1,
@@ -55,6 +83,13 @@ const Community = ({navigation}) => {
   // ];
 
   const likePostHandler = async postId => {
+    if (isGuest) {
+      Alert.alert('Login Required', 'Please log in to like posts.', [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'Login', onPress: () => dispatch(goToLogin())},
+      ]);
+      return;
+    }
     if (!_id || !postId) return;
 
     let likeData = {
@@ -79,7 +114,18 @@ const Community = ({navigation}) => {
   };
 
   const addCommentHandler = async postId => {
+    if (isGuest) {
+      Alert.alert('Login Required', 'Please log in to add comments.', [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'Login', onPress: () => dispatch(goToLogin())},
+      ]);
+      return;
+    }
     if (!comment.trim() || !postId || !_id) return;
+    if (containsObjectionableContent(comment)) {
+      ShowToast('error', objectionableContentMessage);
+      return;
+    }
 
     console.log('comment postId', comment, postId);
     const currentComment = comment;
@@ -105,7 +151,82 @@ const Community = ({navigation}) => {
       );
     }
   };
+
+  const reportPostHandler = async (item, reason) => {
+    if (isGuest) {
+      Alert.alert('Login Required', 'Please log in to report posts.', [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'Login', onPress: () => dispatch(goToLogin())},
+      ]);
+      return false;
+    }
+
+    const postId = item?._id;
+    if (!postId) {
+      return false;
+    }
+
+    try {
+      const response = await reportPost({postId, reason}).unwrap();
+
+      if (!response?.success) {
+        ShowToast('error', response?.message || 'Unable to report this post.');
+        return false;
+      }
+
+      refreshFeedAfterModeration(
+        response?.message || 'Post reported successfully.',
+      );
+      return true;
+    } catch (err) {
+      ShowToast(
+        'error',
+        err?.data?.message || 'Unable to report this post right now.',
+      );
+      return false;
+    }
+  };
+
+  const blockUserHandler = async (item, reason) => {
+    if (isGuest) {
+      Alert.alert('Login Required', 'Please log in to block users.', [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'Login', onPress: () => dispatch(goToLogin())},
+      ]);
+      return false;
+    }
+
+    const blockedUserId = item?.userId?._id;
+    if (!blockedUserId) {
+      return false;
+    }
+
+    try {
+      const response = await blockUser({
+        blockedUserId,
+        postId: item?._id,
+        reason,
+      }).unwrap();
+
+      if (!response?.success) {
+        ShowToast('error', response?.message || 'Unable to block this user.');
+        return false;
+      }
+
+      refreshFeedAfterModeration(
+        response?.message || 'User blocked successfully.',
+      );
+      return true;
+    } catch (err) {
+      ShowToast(
+        'error',
+        err?.data?.message || 'Unable to block this user right now.',
+      );
+      return false;
+    }
+  };
   useEffect(() => {
+    isMounted.current = true;
     const fetchPosts = async () => {
       try {
         const res = await getAllPosts().unwrap();
@@ -123,7 +244,7 @@ const Community = ({navigation}) => {
     return () => {
       isMounted.current = false;
     };
-  }, [getAllPosts,focus, likeChanged]);
+  }, [getAllPosts, focus, likeChanged]);
   // const postData = [
   //   {
   //     id: 1,
@@ -141,12 +262,10 @@ const Community = ({navigation}) => {
 
   return (
     <Wrapper
-      isScroll
-      containerStyle={{paddingBottom: responsiveHeight(12), padding: 0.1}}>
-      <Header
-        title="Community"
-        style={{paddingHorizontal: responsiveHeight(2)}}
-      />
+      containerStyle={{
+        padding: 0.1,
+        paddingTop: responsiveHeight(3),
+      }}>
       {/* <View
         style={{
           flexDirection: 'row',
@@ -174,110 +293,131 @@ const Community = ({navigation}) => {
           <Ionicons name="chevron-down" color={Colors.black} size={20} />
         </TouchableOpacity>
       </View> */}
-      {isLoading ? (
-        <View style={{flex: 0.8, justifyContent: 'center'}}>
-          <ActivityIndicator size={40} color={Colors.black} />
-        </View>
+      {isLoading || isRefreshingFeed ? (
+        <>
+          <View style={{paddingHorizontal: responsiveHeight(2)}}>
+            <Header title="Community" />
+          </View>
+          <View style={{flex: 1, justifyContent: 'center'}}>
+            <ActivityIndicator size={40} color={Colors.black} />
+          </View>
+        </>
       ) : (
-        <View>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingHorizontal: responsiveHeight(2),
-              paddingTop: responsiveHeight(3),
-            }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: responsiveHeight(2),
-              }}>
-              <SafeFastImage
-                source={
-                  image ? {uri: `${IMAGE_URL}${image}`} : images.userDummy
-                }
+        <FlatList
+          style={{flex: 1}}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom: responsiveHeight(14),
+          }}
+          ListHeaderComponent={
+            <>
+              <View style={{paddingHorizontal: responsiveHeight(2)}}>
+                <Header title="Community" />
+              </View>
+              <View
                 style={{
-                  height: responsiveHeight(5),
-                  width: responsiveWidth(10.5),
-                  borderRadius: responsiveHeight(5),
-                }}
-                resizeMode={FastImage.resizeMode.cover}
-              />
-              <BoldText title={name} fontWeight="500" fontSize={2} />
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: responsiveHeight(1),
-              }}>
-              {/* <View
-                style={{
-                  padding: responsiveHeight(0.7),
-                  borderWidth: 1,
-                  borderColor: '#646464',
-                  borderRadius: responsiveHeight(3),
-                  paddingHorizontal: responsiveHeight(1.6),
-                }}>
-                <NormalText
-                  title={`${postData?.length} Post`}
-                  color="#646464"
-                />
-              </View> */}
-              <TouchableOpacity
-                onPress={() => navigation.navigate('CreatePost')}
-                style={{
-                  padding: responsiveHeight(0.7),
-                  borderWidth: 1,
-                  borderColor: '#646464',
-                  borderRadius: responsiveHeight(3),
-                  paddingHorizontal: responsiveHeight(1.1),
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: responsiveHeight(0.5),
+                  justifyContent: 'space-between',
+                  paddingHorizontal: responsiveHeight(2),
+                  paddingTop: responsiveHeight(3),
+                  marginBottom: responsiveHeight(3),
                 }}>
-                <AntDesign name="plus" size={20} color="#646464" />
-                <NormalText title="Create" color="#646464" />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <FlatList
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              gap: responsiveHeight(3),
-              padding: responsiveHeight(2),
-              paddingTop: responsiveHeight(3),
-            }}
-            data={postData}
-            keyExtractor={(item, index) => item?._id || `post-${index}`}
-            removeClippedSubviews={true}
-            maxToRenderPerBatch={5}
-            windowSize={10}
-            getItemLayout={(_, index) => ({
-              length: responsiveHeight(50), // Approximate height of each post
-              offset: responsiveHeight(53) * index, // Height + gap
-              index,
-            })}
-            renderItem={({item, index}) => {
-              console.log('item', item);
-              return (
-                <Post
-                  handleCommentPress={() => {
-                    // console.log('val,',val)
-                    addCommentHandler(item?._id);
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: responsiveHeight(2),
+                  }}>
+                  <SafeFastImage
+                    source={
+                      !isGuest && image
+                        ? {uri: `${IMAGE_URL}${image}`}
+                        : images.userDummy
+                    }
+                    style={{
+                      height: responsiveHeight(5),
+                      width: responsiveWidth(10.5),
+                      borderRadius: responsiveHeight(5),
+                    }}
+                    resizeMode={FastImage.resizeMode.cover}
+                  />
+                  <BoldText
+                    title={isGuest ? 'Guest' : name}
+                    fontWeight="500"
+                    fontSize={2}
+                  />
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (isGuest) {
+                      Alert.alert(
+                        'Login Required',
+                        'Please log in to create a post.',
+                        [
+                          {text: 'Cancel', style: 'cancel'},
+                          {text: 'Login', onPress: () => dispatch(goToLogin())},
+                        ],
+                      );
+                      return;
+                    }
+                    navigation.navigate('CreatePost');
                   }}
-                  commentLoading={commentLoading}
-                  comment={comment}
-                  setComment={setComment}
-                  handleLikePress={() => likePostHandler(item?._id)}
-                  item={item}
-                />
-              );
-            }}
-          />
-        </View>
+                  style={{
+                    padding: responsiveHeight(0.7),
+                    borderWidth: 1,
+                    borderColor: '#646464',
+                    borderRadius: responsiveHeight(3),
+                    paddingHorizontal: responsiveHeight(1.1),
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: responsiveHeight(0.5),
+                  }}>
+                  <AntDesign name="plus" size={20} color="#646464" />
+                  <NormalText title="Create" color="#646464" />
+                </TouchableOpacity>
+              </View>
+            </>
+          }
+          ListEmptyComponent={
+            <View
+              style={{
+                minHeight: responsiveHeight(45),
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <NormalText
+                title="No community posts available."
+                color={Colors.greyText4}
+                txtAlign="center"
+              />
+            </View>
+          }
+          data={postData || []}
+          keyExtractor={(item, index) => item?._id || `post-${index}`}
+          initialNumToRender={3}
+          maxToRenderPerBatch={3}
+          updateCellsBatchingPeriod={50}
+          windowSize={5}
+          removeClippedSubviews={true}
+          ItemSeparatorComponent={() => (
+            <View style={{height: responsiveHeight(3)}} />
+          )}
+          renderItem={({item}) => (
+            <View style={{marginHorizontal: responsiveHeight(2)}}>
+              <Post
+                handleCommentPress={() => addCommentHandler(item?._id)}
+                commentLoading={commentLoading}
+                comment={comment}
+                setComment={setComment}
+                handleLikePress={() => likePostHandler(item?._id)}
+                onReportPost={reason => reportPostHandler(item, reason)}
+                onBlockUser={reason => blockUserHandler(item, reason)}
+                item={item}
+              />
+            </View>
+          )}
+        />
       )}
     </Wrapper>
   );

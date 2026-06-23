@@ -112,6 +112,33 @@ export const MainApis = createApi({
         body: data,
       }),
     }),
+    blockUser: builder.mutation({
+      query: data => ({
+        url: endpoints.BLOCKUSER,
+        method: 'POST',
+        body: data,
+      }),
+    }),
+    reportPost: builder.mutation({
+      query: data => ({
+        url: endpoints.REPORTPOST,
+        method: 'POST',
+        body: data,
+      }),
+    }),
+    getBlockedUsers: builder.query({
+      query: () => ({
+        url: endpoints.GETBLOCKEDUSERS,
+        method: 'GET',
+      }),
+    }),
+    unblockUser: builder.mutation({
+      query: data => ({
+        url: endpoints.UNBLOCKUSER,
+        method: 'POST',
+        body: data,
+      }),
+    }),
     likePost: builder.mutation({
       query: data => ({
         url: endpoints.LIKEPOST,
@@ -201,6 +228,10 @@ export const {
   useAddReviewMutation,
   useLazyGetUserQueriesQuery,
   useCreatePostMutation,
+  useBlockUserMutation,
+  useReportPostMutation,
+  useLazyGetBlockedUsersQuery,
+  useUnblockUserMutation,
   useLazyGetUserBookingsQuery,
   useCancelBookingMutation,
   useLazyGetSellerProfileQuery,

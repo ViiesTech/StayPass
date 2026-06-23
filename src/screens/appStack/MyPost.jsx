@@ -24,6 +24,10 @@ import {useSelector} from 'react-redux';
 import {IMAGE_URL} from '../../redux/constant';
 import {ShowToast} from '../../GlobalFunctions';
 import {useIsFocused} from '@react-navigation/native';
+import {
+  containsObjectionableContent,
+  objectionableContentMessage,
+} from '../../utils/contentModeration';
 const MyPost = ({navigation}) => {
   const [getAllPosts, {isLoading, data, error}] = useLazyGetAllPostsQuery();
   const [likePost, {isLoading: likeLoading}] = useLikePostMutation();
@@ -80,6 +84,10 @@ const MyPost = ({navigation}) => {
 
   const addCommentHandler = async postId => {
     if (!comment.trim() || !postId || !_id) {
+      return;
+    }
+    if (containsObjectionableContent(comment)) {
+      ShowToast('error', objectionableContentMessage);
       return;
     }
     
@@ -186,7 +194,7 @@ const MyPost = ({navigation}) => {
                   paddingHorizontal: responsiveHeight(1.6),
                 }}>
                 <NormalText
-                  title={`${postData?.length} Post`}
+                  title={`${postData?.length || 0} Post`}
                   color="#646464"
                 />
               </View>
@@ -216,6 +224,34 @@ const MyPost = ({navigation}) => {
                 paddingTop: responsiveHeight(3),
               }}
               data={postData}
+              ListEmptyComponent={
+                <View
+                  style={{
+                    minHeight: responsiveHeight(42),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingHorizontal: responsiveHeight(3),
+                  }}>
+                  <AntDesign
+                    name="filetext1"
+                    size={42}
+                    color={Colors.greyText3}
+                  />
+                  <BoldText
+                    title="No posts yet"
+                    fontSize={2.3}
+                    mrgnTop={2}
+                    txtAlign="center"
+                  />
+                  <NormalText
+                    title="Create your first community post to see it here."
+                    color={Colors.greyText4}
+                    fontSize={1.7}
+                    mrgnTop={1}
+                    txtAlign="center"
+                  />
+                </View>
+              }
               keyExtractor={(item, index) => item?._id || `post-${index}`}
               removeClippedSubviews={true}
               maxToRenderPerBatch={5}

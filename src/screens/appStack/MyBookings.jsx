@@ -1,6 +1,7 @@
 /* eslint-disable react/no-unstable-nested-components */
 /* eslint-disable react-native/no-inline-styles */
 import {
+  Alert,
   View,
   Text,
   FlatList,
@@ -14,17 +15,27 @@ import Br from '../../utils/Br';
 import {BoldText, NormalText} from '../../components/Titles';
 import {Colors} from '../../assets/colors';
 import {responsiveHeight} from '../../responsive_dimensions';
-import {useSelector} from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
+import {logout, goToLogin} from '../../redux/slices';
 import {useLazyGetUserBookingsQuery} from '../../redux/services/MainIntegration';
 import moment from 'moment';
+import {ShowToast} from '../../GlobalFunctions';
 
 const MyBookings = ({navigation}) => {
-  const {_id} = useSelector(state => state?.persistedData?.user);
-  console.log(_id);
+  const {_id, isGuest, user} = useSelector(state => state?.persistedData);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    if (isGuest) {
+      Alert.alert('Login Required', 'Please log in to view your bookings.', [
+        {text: 'Cancel', style: 'cancel', onPress: () => navigation.goBack()},
+        {text: 'Login', onPress: () => dispatch(goToLogin())},
+      ]);
+    }
+  }, [isGuest]);
+  console.log('user', user);
   const [getUserBookings, {isLoading, data: bookingData}] =
     useLazyGetUserBookingsQuery();
   const myBookingData = bookingData?.data || [];
-  console.log('_id===', _id);
   const getBookingRange = BookingDates => {
     if (!BookingDates || BookingDates.length === 0) return '';
 
@@ -38,7 +49,7 @@ const MyBookings = ({navigation}) => {
     }
   };
   useEffect(() => {
-    getUserBookings(_id)
+    getUserBookings(user?._id)
       .unwrap()
       // .then(res => {
       //   if(!res?.success)
@@ -46,7 +57,7 @@ const MyBookings = ({navigation}) => {
       .catch(err => {
         ShowToast(
           'error',
-          error?.response?.data?.message || 'Some problem occured',
+          err?.response?.data?.message || 'Some problem occured',
         );
       });
   }, []);

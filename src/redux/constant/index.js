@@ -1,9 +1,8 @@
-export const BASE_URL = 'https://apiforapp.link/Staypass/user/';
-export const BASE_URL2 = 'https://apiforapp.link/Staypass/';
-export const IMAGE_URL = 'https://apiforapp.link/Staypass/';
+export const BASE_URL = 'https://staypass.apiforapp.link/api/user/';
+export const BASE_URL2 = 'https://staypass.apiforapp.link/api/';
+export const IMAGE_URL = 'https://staypass.apiforapp.link/api/';
 export const API_KEY = 'AIzaSyC29cK8ZfbPVXu1qejhgrcQROTLcCy-6XQ';
-export const PUBLISHABLE_KEY =
-  'pk_test_51SfTtF0wu2sgmNi0bNOv7loJaKHXP9TpnoRQGzaGkolE5zIKes1Kkd0aBVfadwRuLtIemwdZCS0Q5Qt3cw3rt8u700f7Eemxdd';
+
 export const endpoints = {
   REGISTER: 'signup',
   LOGIN: 'login',
@@ -23,6 +22,10 @@ export const endpoints = {
   ADDCOMMENT: 'commentByUser',
   CREATEBOOKING: 'createBooking',
   CREATEPOST: 'createPost',
+  BLOCKUSER: 'blockUser',
+  REPORTPOST: 'reportPost',
+  GETBLOCKEDUSERS: 'getBlockedUsers',
+  UNBLOCKUSER: 'unBlockUser',
   LIKEPOST: 'likeAndUnLikePost',
   ADDREVIEW: 'addReview',
   GETALLPOST: 'getAllPost',

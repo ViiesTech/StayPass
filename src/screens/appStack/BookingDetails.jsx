@@ -4,6 +4,7 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Text,
 } from 'react-native';
 import React, {useState} from 'react';
 import Wrapper from '../../components/Wrapper';
@@ -64,9 +65,10 @@ const BookingDetails = ({navigation, route}) => {
         }
       })
       .catch(err => {
+        console.log('err====', err?.response?.data?.message);
         ShowToast(
           'error',
-          error?.response?.data?.message || 'Some problem occured',
+          err?.response?.data?.message || 'Some problem occured',
         );
       });
   };
@@ -228,7 +230,24 @@ const BookingDetails = ({navigation, route}) => {
             fontSize={1.6}
             color="#646464"
             txtAlign="center"
-            title="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+            title={
+              <Text style={{textAlign: 'center'}}>
+                By cancelling this booking, you agree to the cancellation policies outlined by the property lister and STAYPASS LLC. Please note that service fees or payment processing charges (such as M-Pesa fees) may be non-refundable. For more details, please review our{' '}
+                <Text
+                  onPress={() => {
+                    setTermsModal(false);
+                    navigation.navigate('TermsConditions');
+                  }}
+                  style={{
+                    color: Colors.theme4,
+                    textDecorationLine: 'underline',
+                    fontWeight: 'bold',
+                  }}>
+                  Terms & Conditions
+                </Text>
+                .
+              </Text>
+            }
           />
           <View
             style={{
