@@ -34,6 +34,7 @@ import {
   objectionableContentMessage,
 } from '../../utils/contentModeration';
 const Community = ({navigation}) => {
+  const communityAvatarSize = responsiveHeight(5);
   const [getAllPosts, {isLoading, data, error}] = useLazyGetAllPostsQuery();
   const [likePost, {isLoading: likeLoading}] = useLikePostMutation();
   const [likeChanged, setLikeChanged] = useState(false);
@@ -336,9 +337,9 @@ const Community = ({navigation}) => {
                         : images.userDummy
                     }
                     style={{
-                      height: responsiveHeight(5),
-                      width: responsiveWidth(10.5),
-                      borderRadius: responsiveHeight(5),
+                      height: communityAvatarSize,
+                      width: communityAvatarSize,
+                      borderRadius: communityAvatarSize / 2,
                     }}
                     resizeMode={FastImage.resizeMode.cover}
                   />

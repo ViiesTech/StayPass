@@ -4,7 +4,7 @@ import React from 'react';
 import FastImage from 'react-native-fast-image';
 import {Header} from '../../components/Header';
 import Wrapper from '../../components/Wrapper';
-import {responsiveHeight, responsiveWidth} from '../../responsive_dimensions';
+import {responsiveHeight} from '../../responsive_dimensions';
 import Br from '../../utils/Br';
 import {images} from '../../assets/images';
 import {Colors} from '../../assets/colors';
@@ -17,24 +17,18 @@ import {IMAGE_URL} from '../../redux/constant';
 import SafeFastImage from '../../components/SafeFastImage';
 const MyProfile = ({navigation}) => {
   const {email, name, image} = useSelector(state => state?.persistedData?.user);
+  const profileAvatarSize = responsiveHeight(13.2);
 
   const data = [
     {
       id: 1,
-      title: 'Personal information',
-      icon: Ionicons,
-      iconName: 'person-outline',
-      navigateTo: '',
-    },
-    {
-      id: 2,
       title: 'Change password',
       icon: MaterialIcons,
       iconName: 'key',
       navigateTo: 'ChangePassword',
     },
     {
-      id: 3,
+      id: 2,
       title: 'Blocked users',
       icon: MaterialIcons,
       iconName: 'block',
@@ -46,14 +40,14 @@ const MyProfile = ({navigation}) => {
       <Header title="My Profile" />
       <Br space={4} />
       <View style={{alignItems: 'center', justifyContent: 'center'}}>
-        <View style={{width: responsiveWidth(30)}}>
-          <View style={{borderRadius: responsiveHeight(10)}}>
+        <View style={{width: profileAvatarSize}}>
+          <View style={{borderRadius: profileAvatarSize / 2}}>
             <SafeFastImage
               source={image ? {uri: `${IMAGE_URL}${image}`} : images.userDummy}
               style={{
-                height: responsiveHeight(13.2),
-                width: responsiveWidth(27.5),
-                borderRadius: responsiveHeight(10),
+                height: profileAvatarSize,
+                width: profileAvatarSize,
+                borderRadius: profileAvatarSize / 2,
               }}
               resizeMode={FastImage.resizeMode.cover}
             />

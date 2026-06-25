@@ -50,6 +50,7 @@ const Post: React.FC<PostProps> = React.memo(({
   canModerate = true,
 }) => {
   const { _id } = useSelector((state: any) => state.persistedData.user);
+  const avatarSize = responsiveHeight(5);
   
   const isLiked = useMemo(() => {
     return item?.like?.some((user: any) => user._id === _id) || false;
@@ -114,9 +115,9 @@ const Post: React.FC<PostProps> = React.memo(({
       }}>
       <SafeFastImage
         style={{
-          height: responsiveHeight(5),
-          width: responsiveWidth(10.5),
-          borderRadius: responsiveHeight(5),
+          height: avatarSize,
+          width: avatarSize,
+          borderRadius: avatarSize / 2,
         }}
         source={commentItem?.userId?.image ? { uri: `${IMAGE_URL}${commentItem.userId.image}` } : images.userDummy}
         resizeMode={FastImage.resizeMode.cover}
@@ -140,7 +141,7 @@ const Post: React.FC<PostProps> = React.memo(({
         <NormalText title={commentItem?.message || ''} fontSize={2} />
       </View>
     </View>
-  ), [timeAgoShort]);
+  ), [avatarSize, timeAgoShort]);
 
   if (!item) {
     return null;
@@ -165,9 +166,9 @@ const Post: React.FC<PostProps> = React.memo(({
         }}>
         <SafeFastImage
           style={{
-            height: responsiveHeight(5),
-            width: responsiveWidth(10.5),
-            borderRadius: responsiveHeight(5),
+            height: avatarSize,
+            width: avatarSize,
+            borderRadius: avatarSize / 2,
           }}
           source={item?.userId?.image ? { uri: `${IMAGE_URL}${item.userId.image}`, priority: FastImage.priority.normal } : images.userDummy}
           resizeMode={FastImage.resizeMode.cover}

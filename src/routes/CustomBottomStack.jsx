@@ -8,23 +8,23 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {Colors} from '../assets/colors';
 import {responsiveHeight, responsiveWidth} from '../responsive_dimensions';
 import {NormalText} from '../components/Titles';
-import {useNavigation} from '@react-navigation/native';
 import {useSelector, useDispatch} from 'react-redux';
-import {logout, goToLogin} from '../redux/slices';
+import {goToLogin} from '../redux/slices';
 
 const PROTECTED_TABS = ['Profile', 'Queries'];
 
 const CustomBottomStack = ({state, descriptors, navigation}) => {
   const {isGuest} = useSelector(s => s?.persistedData);
   const dispatch = useDispatch();
-  if (!state) return null;
+  if (!state) {
+    return null;
+  }
   const WIDTH = responsiveWidth(100);
   const HEIGHT = 70; // slightly taller to hold the curve
   const RADIUS = 25;
-  const FAB_WIDTH = responsiveWidth(17.5);
-  const FAB_HEIGHT = responsiveHeight(16);
-  const DIP_WIDTH = FAB_WIDTH * 1.4; // curve width
-  const DIP_DEPTH = FAB_HEIGHT / 2; // curve depth
+  const FAB_SIZE = Math.min(responsiveWidth(17.5), responsiveHeight(8.4));
+  const DIP_WIDTH = FAB_SIZE * 1.4; // curve width
+  const DIP_DEPTH = FAB_SIZE / 2; // curve depth
   const CENTER_X = WIDTH / 2;
 
   const d = `
@@ -63,7 +63,7 @@ Z
       <View style={styles.tabContainer}>
         {data.map((item, index) => {
           if (item.isBreak) {
-            return <View key={index} style={{width: FAB_WIDTH}} />;
+            return <View key={index} style={{width: FAB_SIZE}} />;
           }
 
           const IconName = item.icon;
@@ -103,12 +103,17 @@ Z
       </View>
 
       <TouchableOpacity
+        onPress={() => navigation.navigate('Filter')}
+        activeOpacity={0.8}
         style={[
           styles.fab,
           {
             bottom: responsiveHeight(6.5),
             left: '50%',
-            transform: [{translateX: -(FAB_WIDTH / 2)}],
+            width: FAB_SIZE,
+            height: FAB_SIZE,
+            borderRadius: FAB_SIZE / 2,
+            transform: [{translateX: -(FAB_SIZE / 2)}],
           },
         ]}>
         <Entypo name="magnifying-glass" size={30} color="white" />
@@ -143,9 +148,6 @@ const styles = StyleSheet.create({
   },
   fab: {
     backgroundColor: '#F19921',
-    width: responsiveWidth(17.5),
-    height: responsiveHeight(8.4),
-    borderRadius: responsiveHeight(5),
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,

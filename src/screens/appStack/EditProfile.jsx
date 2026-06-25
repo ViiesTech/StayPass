@@ -2,7 +2,6 @@
 import {
   Alert,
   View,
-  Text,
   TouchableOpacity,
   Platform,
   ActivityIndicator,
@@ -12,7 +11,7 @@ import FastImage from 'react-native-fast-image';
 import Wrapper from '../../components/Wrapper';
 import {BackHeader} from '../../components/Header';
 import Br from '../../utils/Br';
-import {responsiveHeight, responsiveWidth} from '../../responsive_dimensions';
+import {responsiveHeight} from '../../responsive_dimensions';
 import Input from '../../utils/TextInput';
 import {Colors} from '../../assets/colors';
 import {heightPercentageToDP} from 'react-native-responsive-screen';
@@ -23,7 +22,7 @@ import {pickImage, ShowToast} from '../../GlobalFunctions';
 import Feather from 'react-native-vector-icons/Feather';
 import {images} from '../../assets/images';
 import {useSelector, useDispatch} from 'react-redux';
-import {logout, goToLogin} from '../../redux/slices';
+import {goToLogin} from '../../redux/slices';
 import {IMAGE_URL} from '../../redux/constant';
 import {useUpdateProfileMutation} from '../../redux/services';
 import moment from 'moment';
@@ -31,6 +30,7 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import SafeFastImage from '../../components/SafeFastImage';
 
 const EditProfile = ({navigation}) => {
+  const profileAvatarSize = responsiveHeight(15.2);
   const {isGuest} = useSelector(state => state?.persistedData);
   const {email, name, image, phone, city, DOB, _id} = useSelector(
     state => state?.persistedData?.user,
@@ -47,7 +47,7 @@ const EditProfile = ({navigation}) => {
         ],
       );
     }
-  }, [isGuest]);
+  }, [dispatch, isGuest, navigation]);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
   const [imgPath, setImgPath] = useState(null);
@@ -160,9 +160,9 @@ const EditProfile = ({navigation}) => {
                 : images.userDummy
             }
             style={{
-              height: responsiveHeight(15.2),
-              width: responsiveWidth(Platform.OS === 'android' ? 30.5 : 32),
-              borderRadius: responsiveHeight(10),
+              height: profileAvatarSize,
+              width: profileAvatarSize,
+              borderRadius: profileAvatarSize / 2,
             }}
             resizeMode={FastImage.resizeMode.cover}
           />

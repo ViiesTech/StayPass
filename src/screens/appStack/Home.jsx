@@ -34,6 +34,7 @@ import {setUserData} from '../../redux/slices';
 const Home = ({navigation}) => {
   const [getAllProperties, {data: propertiesData, isLoading}] =
     useLazyGetAllPropertiesQuery();
+  const [searchQuery, setSearchQuery] = useState('');
   // const [createPaymentIntent, {isLoading: paymentIntentLoading}] =
   //   useCreatePaymentIntentMutation();
   const {user} = useSelector(state => state?.persistedData);
@@ -41,6 +42,7 @@ const Home = ({navigation}) => {
   const [hotProperties, setHotProperties] = useState([]);
   const dispatch = useDispatch();
   const [regularProperties, setRegularProperties] = useState([]);
+  const normalizedSearch = searchQuery.trim().toLowerCase();
   const data = [
     {id: 1, title: 'Sale'},
     {id: 2, title: 'Rent'},
@@ -129,7 +131,34 @@ const Home = ({navigation}) => {
   // }, []);
   useEffect(() => {
     getAllPropertiesHandler();
+    // This screen loads properties once on mount and refreshes manually after actions.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const matchesSearch = property => {
+    if (!normalizedSearch) {
+      return true;
+    }
+
+    const searchableValues = [
+      property?.propertyName,
+      property?.address,
+      property?.category,
+    ]
+      .filter(Boolean)
+      .map(value => String(value).toLowerCase());
+
+    return searchableValues.some(value => value.includes(normalizedSearch));
+  };
+
+  const filteredSuperHotProperties = superHotProperties.filter(matchesSearch);
+  const filteredHotProperties = hotProperties.filter(matchesSearch);
+  const filteredRegularProperties = regularProperties.filter(matchesSearch);
+  const hasSearchResults =
+    filteredSuperHotProperties.length > 0 ||
+    filteredHotProperties.length > 0 ||
+    filteredRegularProperties.length > 0;
+
   return (
     <Wrapper isScroll containerStyle={{paddingBottom: 120}}>
       <Header />
@@ -142,6 +171,10 @@ const Home = ({navigation}) => {
           }}
           placeholder="Search what you need"
           placeholderTextColor="#BBBBBB"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          returnKeyType="search"
+          autoCapitalize="none"
         />
         <TouchableOpacity
           onPress={() => navigation.navigate('Filter')}
@@ -220,6 +253,20 @@ const Home = ({navigation}) => {
         <View style={{flex: 1, justifyContent: 'center'}}>
           <ActivityIndicator size={40} color={Colors.black} />
         </View>
+      ) : normalizedSearch && !hasSearchResults ? (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            paddingVertical: responsiveHeight(8),
+          }}>
+          <NormalText
+            txtAlign="center"
+            fontSize={2.2}
+            fontWeight="600"
+            title="No properties found for your search."
+          />
+        </View>
       ) : (
         <View>
           <View
@@ -234,10 +281,10 @@ const Home = ({navigation}) => {
               padding: responsiveHeight(1.5),
             }}>
             <ListHeading title="Explore Properties" />
-            {superHotProperties?.length ? (
+            {filteredSuperHotProperties?.length ? (
               <FlatList
                 numColumns={2}
-                data={superHotProperties.slice(0, 2)}
+                data={filteredSuperHotProperties.slice(0, 2)}
                 columnWrapperStyle={{
                   justifyContent: 'space-between',
                   gap: responsiveHeight(1.5),
@@ -320,10 +367,10 @@ const Home = ({navigation}) => {
               padding: responsiveHeight(1.5),
             }}>
             <ListHeading title="Explore Properties" />
-            {hotProperties?.length ? (
+            {filteredHotProperties?.length ? (
               <FlatList
                 numColumns={2}
-                data={hotProperties.slice(0, 2)}
+                data={filteredHotProperties.slice(0, 2)}
                 columnWrapperStyle={{
                   justifyContent: 'space-between',
                   gap: responsiveHeight(1.5),
@@ -370,10 +417,10 @@ const Home = ({navigation}) => {
               padding: responsiveHeight(1.5),
             }}>
             <ListHeading title="Explore Properties" />
-            {regularProperties?.length ? (
+            {filteredRegularProperties?.length ? (
               <FlatList
                 numColumns={2}
-                data={regularProperties.slice(0, 2)}
+                data={filteredRegularProperties.slice(0, 2)}
                 columnWrapperStyle={{
                   justifyContent: 'space-between',
                   gap: responsiveHeight(1.5),

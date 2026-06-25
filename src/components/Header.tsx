@@ -18,7 +18,6 @@ import { useDeleteAccountMutation } from '../redux/services';
 import { ShowToast } from '../GlobalFunctions';
 
 interface HeaderProps {
-  onPress?: () => void;
   title?: string;
   style?: object;
 }
@@ -27,12 +26,15 @@ interface BackHeaderProps {
   isPlainHeader?: boolean,
   style?: object,
 }
-export const Header: React.FC<HeaderProps> = ({ onPress, title, style }) => {
+export const Header: React.FC<HeaderProps> = ({ title, style }) => {
   const navigation = useNavigation();
+  const drawerAvatarSize = responsiveHeight(13.2);
+  const drawerAvatarGap = responsiveHeight(0.5);
+  const drawerAvatarOuterSize = drawerAvatarSize + drawerAvatarGap * 2;
   const [modalVisible, setModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const { name, email, image, _id } = useSelector((state) => state?.persistedData?.user);
-  const { token, isGuest } = useSelector((state) => state?.persistedData);
+  const { isGuest } = useSelector((state) => state?.persistedData);
 
   const [deleteAccount, { isLoading }] = useDeleteAccountMutation();
   const dispatch = useDispatch();
@@ -101,12 +103,15 @@ export const Header: React.FC<HeaderProps> = ({ onPress, title, style }) => {
   };
   return (
     <View>
-      <View style={[{ flexDirection: 'row', alignItems: 'center', gap: responsiveHeight(3) }, style]}>
-        {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)} style={{ width: responsiveWidth(14) }}>
-          <TouchableOpacity onPress={() => setModalVisible(!modalVisible)} style={{ backgroundColor: Colors.themeColor, borderRadius: responsiveHeight(1), height: responsiveHeight(5.5), width: responsiveWidth(12.5), justifyContent: 'center', alignItems: 'center' }}>
-            <SvgIcons xml={icons.menu} height={24} width={24} />
-          </TouchableOpacity>
-        </TouchableOpacity> */}
+      <View
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          },
+          style,
+        ]}>
         <TouchableOpacity
           onPress={() => setModalVisible(!modalVisible)}
           activeOpacity={0.7}
@@ -123,8 +128,20 @@ export const Header: React.FC<HeaderProps> = ({ onPress, title, style }) => {
           <SvgIcons xml={icons.menu} height={24} width={24} />
         </TouchableOpacity>
         {title ? (
-          <View style={{ position: 'absolute', alignSelf: 'center', width: responsiveWidth(100) }}>
-            <NormalText title={title} alignSelf="center" fontSize={2.3} fontWeight="600" />
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              left: responsiveWidth(12.5) + responsiveHeight(3),
+              right: responsiveWidth(12.5) + responsiveHeight(3),
+              alignItems: 'center',
+            }}>
+            <NormalText
+              title={title}
+              alignSelf="center"
+              fontSize={2.3}
+              fontWeight="600"
+            />
           </View>
         ) : (
           <Image
@@ -136,16 +153,24 @@ export const Header: React.FC<HeaderProps> = ({ onPress, title, style }) => {
             resizeMode="contain"
           />
         )}
+        {title ? (
+          <View
+            style={{
+              width: responsiveWidth(12.5),
+              height: responsiveHeight(5.5),
+            }}
+          />
+        ) : null}
       </View>
       <Modal onBackdropPress={() => setModalVisible(false)} animationInTiming={400} animationOutTiming={400} animationIn={'slideInLeft'} animationOut={'slideOutLeft'} style={{ margin: 0, flex: 1, backgroundColor: Colors.white, width: responsiveWidth(80) }} isVisible={modalVisible}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1, marginTop: Platform.OS === 'android' ? responsiveHeight(0.1) : responsiveHeight(5) }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, marginTop: Platform.OS === 'android' ? responsiveHeight(0.1) : responsiveHeight(5), paddingBottom: responsiveHeight(4) }}>
           <TouchableOpacity onPress={() => setModalVisible(false)} style={{ alignSelf: 'flex-end', margin: responsiveHeight(2.5), width: responsiveWidth(7) }}>
             <SvgIcons xml={icons.cross} height={20} width={20} />
           </TouchableOpacity>
           <View style={{ paddingLeft: responsiveHeight(4), paddingVertical: responsiveHeight(2) }}>
-            <View style={{ width: responsiveWidth(30) }}>
-              <View style={{ padding: responsiveHeight(0.3), borderWidth: 2, borderColor: Colors.borderColor5, borderRadius: responsiveHeight(10) }}>
-                <Image source={!isGuest && image ? { uri: `${IMAGE_URL}${image}` } : images.userDummy} style={{ height: responsiveHeight(13.2), width: responsiveWidth(27.5), resizeMode: 'cover', borderRadius: responsiveHeight(10) }} />
+            <View style={{ width: drawerAvatarOuterSize, height: drawerAvatarOuterSize }}>
+              <View style={{ width: drawerAvatarOuterSize, height: drawerAvatarOuterSize, padding: drawerAvatarGap, borderWidth: 2, borderColor: Colors.borderColor5, borderRadius: drawerAvatarOuterSize / 2, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+                <Image source={!isGuest && image ? { uri: `${IMAGE_URL}${image}` } : images.userDummy} style={{ height: drawerAvatarSize, width: drawerAvatarSize, resizeMode: 'cover', borderRadius: drawerAvatarSize / 2 }} />
               </View>
             </View>
 
@@ -153,7 +178,7 @@ export const Header: React.FC<HeaderProps> = ({ onPress, title, style }) => {
               <BoldText title={isGuest ? 'Guest' : name} fontWeight="700" fontSize={2.4} color={Colors.black} />
               {!isGuest && <NormalText fontWeight="500" title={email} fontSize={2} color={Colors.black} />}
               <View style={{ marginTop: responsiveHeight(2) }}>
-                <FlatList data={drawerData} renderItem={({ item, index }) => {
+                <FlatList data={drawerData} renderItem={({ item }) => {
                   return (
                     <TouchableOpacity style={styles.listContainer} onPress={() => handleDrawerPress(item)}>
                       <NormalText fontWeight="600" title={item.title} fontSize={2} color={Colors.black} />
@@ -164,8 +189,8 @@ export const Header: React.FC<HeaderProps> = ({ onPress, title, style }) => {
             </View>
 
           </View>
-          <View style={{ flex: Platform.OS === 'android' ? 0.8 : 0.6, justifyContent: 'flex-end' }}>
-            <TouchableOpacity onPress={() => isGuest ? dispatch(goToLogin()) : dispatch(logout())} style={{ borderTopRightRadius: responsiveHeight(4), borderBottomRightRadius: responsiveHeight(4), backgroundColor: Colors.themeColor, width: responsiveWidth(50), paddingVertical: responsiveHeight(1.8) }}>
+          <View style={{ flex: Platform.OS === 'android' ? 0.8 : 0.6, justifyContent: 'flex-end', paddingBottom: responsiveHeight(5) }}>
+            <TouchableOpacity onPress={() => isGuest ? dispatch(goToLogin()) : dispatch(logout())} style={{ borderTopRightRadius: responsiveHeight(4), borderBottomRightRadius: responsiveHeight(4), backgroundColor: Colors.themeColor, width: responsiveWidth(50), paddingVertical: responsiveHeight(1.8), marginBottom: responsiveHeight(3) }}>
               <NormalText fontWeight="700" color={Colors.white} alignSelf="center" title={isGuest ? 'Login' : 'Logout'} />
             </TouchableOpacity>
           </View>

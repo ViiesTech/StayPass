@@ -40,32 +40,27 @@ const Filter = ({navigation}) => {
   const [activePropertyType, setActivePropertyType] = useState('Apartment');
   const [selectedBedRooms, setSelectedBedRooms] = useState(1);
   const refRBSheet = useRef();
-  const [selectedCity, setSelectedCity] = useState('New York City');
+  const [selectedCity, setSelectedCity] = useState('Thika');
   console.log('activeTab', activeTab);
   const [cities, setCities] = useState([
-    // --- USA (Top Priority) ---
-    {id: 1, cityName: 'New York'},
-    {id: 2, cityName: 'Los Angeles'},
-    {id: 3, cityName: 'Chicago'},
-    {id: 4, cityName: 'Houston'},
-    {id: 5, cityName: 'Phoenix'},
-    {id: 6, cityName: 'Philadelphia'},
-    {id: 7, cityName: 'San Antonio'},
-    {id: 8, cityName: 'San Diego'},
-    {id: 9, cityName: 'Dallas'},
-    {id: 10, cityName: 'San Jose'},
-
-    // --- International Major Cities ---
-    {id: 11, cityName: 'London'},
-    {id: 12, cityName: 'Dubai'},
-    {id: 13, cityName: 'Sydney'},
-    {id: 14, cityName: 'Melbourne'},
-    {id: 15, cityName: 'Toronto'},
-    {id: 16, cityName: 'Singapore'},
-    {id: 17, cityName: 'Tokyo'},
-    {id: 18, cityName: 'Paris'},
-    {id: 19, cityName: 'Berlin'},
-    {id: 20, cityName: 'Hong Kong'},
+    {id: 1, cityName: 'Thika'},
+    {id: 2, cityName: 'Nairobi'},
+    {id: 3, cityName: 'Mombasa'},
+    {id: 4, cityName: 'Kisumu'},
+    {id: 5, cityName: 'Nakuru'},
+    {id: 6, cityName: 'Eldoret'},
+    {id: 7, cityName: 'Malindi'},
+    {id: 8, cityName: 'Naivasha'},
+    {id: 9, cityName: 'Nyeri'},
+    {id: 10, cityName: 'Machakos'},
+    {id: 11, cityName: 'Kakamega'},
+    {id: 12, cityName: 'Meru'},
+    {id: 13, cityName: 'Nanyuki'},
+    {id: 14, cityName: 'New York'},
+    {id: 15, cityName: 'Los Angeles'},
+    {id: 16, cityName: 'Chicago'},
+    {id: 17, cityName: 'Houston'},
+    {id: 18, cityName: 'Miami'},
   ]);
 
   // const [checkInDate, setCheckInDate] = useState(null);
@@ -77,7 +72,6 @@ const Filter = ({navigation}) => {
   const [maxPrice, setMaxPrice] = useState(null);
   const data2 = [
     {id: 1, title: 'City', subTitle: selectedCity},
-    {id: 2, title: 'Nearby Landmarks'},
   ];
   // onPress={() =>
   //                   navigation.navigate('PropertiesForSale', {type: item?.id})

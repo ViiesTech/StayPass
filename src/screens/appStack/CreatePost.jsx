@@ -29,6 +29,7 @@ import {
   objectionableContentMessage,
 } from '../../utils/contentModeration';
 const CreatePost = ({navigation}) => {
+  const postAvatarSize = responsiveHeight(5);
   const dispatch = useDispatch();
   const {isGuest} = useSelector(state => state?.persistedData);
   const {
@@ -137,9 +138,9 @@ const CreatePost = ({navigation}) => {
         }}>
         <SafeFastImage
           style={{
-            height: responsiveHeight(5),
-            width: responsiveWidth(10),
-            borderRadius: responsiveHeight(4),
+            height: postAvatarSize,
+            width: postAvatarSize,
+            borderRadius: postAvatarSize / 2,
           }}
           source={
             userImage ? {uri: `${IMAGE_URL}${userImage}`} : images.userDummy
